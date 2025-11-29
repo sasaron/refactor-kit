@@ -177,7 +177,7 @@ pytest
 - Commit after each task or logical group
 - Run tests after EVERY change
 - Stop and investigate any test failure immediately
-- Document any deviations from plan in this file
+- Document any deviations from plan in the **Notes** section below or create a new **Deviations** section
 
 ## Post-Completion
 

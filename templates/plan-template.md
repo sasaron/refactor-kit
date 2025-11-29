@@ -156,9 +156,10 @@ After:
 
 If refactoring must be completely abandoned:
 
-1. [Step 1]
-2. [Step 2]
-3. [Step 3]
+1. Revert all commits to the last known good state (or delete the feature branch)
+2. Restore any backup configuration files or data
+3. Notify stakeholders of the rollback and document the reasons
+4. [Add project-specific rollback steps if needed]
 
 ## Dependencies & Risks
 

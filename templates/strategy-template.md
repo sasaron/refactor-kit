@@ -115,7 +115,7 @@
 
 - **Phase 1**: Add deprecation warnings (keep old interface working)
 - **Phase 2**: Update documentation with migration guide
-- **Phase 3**: Remove deprecated interface after [timeframe]
+- **Phase 3**: Remove deprecated interface after [timeframe, e.g., "2 major versions" or "6 months"]
 
 ## Risk Mitigation
 

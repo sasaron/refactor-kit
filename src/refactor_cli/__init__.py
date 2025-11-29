@@ -104,7 +104,7 @@ def init(
     ai_assistant: Optional[str] = typer.Option(
         None,
         "--ai",
-        help="AI assistant to use: claude, gemini, copilot, cursor-agent",
+        help=f"AI assistant to use: {', '.join(AGENT_CONFIG.keys())}",
     ),
     here: bool = typer.Option(
         False, "--here", help="Initialize project in the current directory"
