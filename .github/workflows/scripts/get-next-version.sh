@@ -28,5 +28,5 @@ PATCH=${VERSION_PARTS[2]:-0}
 PATCH=$((PATCH + 1))
 NEW_VERSION="v$MAJOR.$MINOR.$PATCH"
 
-echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
 echo "New version will be: $NEW_VERSION"
