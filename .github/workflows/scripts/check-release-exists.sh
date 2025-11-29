@@ -13,6 +13,13 @@ if [[ -z "$VERSION" ]]; then
   exit 1
 fi
 
+# Validate version format
+if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  echo "Error: Invalid version format: $VERSION" >&2
+  echo "Expected format: v0.0.0" >&2
+  exit 1
+fi
+
 if gh release view "$VERSION" >/dev/null 2>&1; then
   echo "exists=true" >> $GITHUB_OUTPUT
   echo "Release $VERSION already exists, skipping..."
