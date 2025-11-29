@@ -22,7 +22,8 @@ if [ "$LAST_TAG" = "v0.0.0" ]; then
   COMMIT_COUNT=$(git rev-list --count HEAD)
   if [ "$COMMIT_COUNT" -gt 50 ]; then
     COMMITS=$(git log --oneline --pretty=format:"- %s" -n 50)
-    COMMITS="$COMMITS\n- ... and $((COMMIT_COUNT - 50)) more commits"
+    COMMITS="$COMMITS
+- ... and $((COMMIT_COUNT - 50)) more commits"
   else
     COMMITS=$(git log --oneline --pretty=format:"- %s" -n "$COMMIT_COUNT")
   fi
