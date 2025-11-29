@@ -1,17 +1,17 @@
 <div align="center">
     <h1>🔧 Refactor Kit</h1>
-    <h3><em>Make your codebase AI-ready through systematic refactoring.</em></h3>
+    <h3><em>Systematic, safe, and structured code refactoring toolkit.</em></h3>
 </div>
 
 <p align="center">
-    <strong>An open source toolkit for structured, safe, and systematic code refactoring that enables effective AI-assisted development.</strong>
+    <strong>An open source toolkit for performing systematic refactoring with clear phases: Analysis, Strategy, Planning, Execution, and Verification.</strong>
 </p>
 
 ---
 
 ## Table of Contents
 
-- [🤔 Why Refactoring is Essential for AI-Enabled Development](#-why-refactoring-is-essential-for-ai-enabled-development)
+- [🤔 Why Systematic Refactoring](#-why-systematic-refactoring)
 - [⚡ Get Started](#-get-started)
 - [🤖 Supported AI Agents](#-supported-ai-agents)
 - [🔧 Refactor CLI Reference](#-refactor-cli-reference)
@@ -23,20 +23,21 @@
 - [👥 Maintainers](#-maintainers)
 - [📄 License](#-license)
 
-## 🤔 Why Refactoring is Essential for AI-Enabled Development
+## 🤔 Why Systematic Refactoring
 
-AI coding assistants work best with **clean, well-structured code**. Legacy codebases with tangled dependencies, unclear responsibilities, and poor naming make it difficult for AI to understand context and provide accurate suggestions.
+Refactoring is often treated as an afterthought—something we do when the code becomes "too messy." But without a structured approach, refactoring efforts can be risky, inconsistent, and incomplete.
 
-**Refactor Kit** provides a systematic approach to prepare your codebase for effective AI collaboration:
+**Refactor Kit** provides a systematic approach to refactoring:
 
-- **Clear Structure**: AI understands modular, well-organized code better
-- **Reduced Complexity**: Simpler code means more accurate AI suggestions
-- **Better Naming**: Self-documenting code gives AI clearer context
-- **Isolated Components**: AI can work on independent units without side effects
+- **Analysis First**: Understand the codebase before making changes
+- **Clear Strategy**: Define goals and success criteria upfront
+- **Incremental Steps**: Small, verifiable changes reduce risk
+- **Behavior Preservation**: Tests ensure functionality remains intact
+- **Verification**: Confirm refactoring achieved its goals
 
-### The AI-Ready Codebase
+### Benefits
 
-A codebase that is easy for AI to work with is also easier for humans to understand and maintain. This toolkit promotes systematic refactoring that benefits both AI assistants and human developers.
+Systematic refactoring produces cleaner, more maintainable code. As a side effect, well-structured code also enables more effective collaboration with AI coding assistants.
 
 ## ⚡ Get Started
 
@@ -125,8 +126,6 @@ Use **`/refactor.verify`** to ensure the refactoring is complete and behavior is
 /refactor.verify
 ```
 
-For detailed step-by-step instructions, see our [comprehensive guide](./ai-enabling-refactoring.md).
-
 ## 🤖 Supported AI Agents
 
 | Agent | Support | Notes |
@@ -178,13 +177,13 @@ After running `refactor init`, your AI coding agent will have access to these sl
 
 ## 📚 Core Philosophy
 
-Systematic refactoring for AI-enabled development emphasizes:
+Systematic refactoring emphasizes:
 
 - **Analysis-first approach** where understanding precedes action
 - **Behavior preservation** as the non-negotiable constraint
 - **Incremental transformations** rather than big-bang rewrites
 - **Test-driven safety nets** to catch regressions early
-- **AI collaboration** as a key benefit of clean, well-structured code
+- **Clear strategy** guiding individual refactoring moves
 
 ## 🌟 Refactoring Phases
 
@@ -303,7 +302,6 @@ For detailed documentation, see:
 - [Documentation Home](./docs/index.md) - Overview and core concepts
 - [Installation Guide](./docs/installation.md) - Detailed setup instructions
 - [Quick Start Guide](./docs/quickstart.md) - Step-by-step tutorial
-- [Refactoring Methodology](./ai-enabling-refactoring.md) - In-depth workflow guide
 
 ## 👥 Maintainers
 
