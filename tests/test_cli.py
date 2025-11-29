@@ -95,6 +95,14 @@ class TestInit:
             assert result.exit_code == 0
             assert (tmp_path / ".github" / "agents").exists()
 
+    def test_init_with_debug_flag(self, tmp_path):
+        """Test init with --debug flag shows debug output."""
+        with patch("pathlib.Path.cwd", return_value=tmp_path):
+            result = runner.invoke(app, ["init", "--here", "--no-git", "--debug"])
+            assert result.exit_code == 0
+            assert "[DEBUG]" in result.stdout
+            assert "Python version" in result.stdout
+
 
 class TestAgentConfig:
     """Tests for agent configuration."""

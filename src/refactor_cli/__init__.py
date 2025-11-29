@@ -20,6 +20,15 @@ app = typer.Typer(
 
 console = Console()
 
+# Global debug flag
+_debug_mode = False
+
+
+def debug_print(message: str) -> None:
+    """Print debug message if debug mode is enabled."""
+    if _debug_mode:
+        console.print(f"[dim][DEBUG][/dim] {message}")
+
 # Agent configuration - single source of truth for all agent metadata
 AGENT_CONFIG = {
     "claude": {
@@ -118,16 +127,29 @@ def init(
     ignore_agent_tools: bool = typer.Option(
         False, "--ignore-agent-tools", help="Skip checks for AI agent tools"
     ),
+    debug: bool = typer.Option(
+        False, "--debug", help="Show verbose diagnostic output for troubleshooting"
+    ),
 ):
     """Initialize a new Refactor Kit project from the latest template."""
+    global _debug_mode
+    _debug_mode = debug
+
+    debug_print(f"Python version: {sys.version}")
+    debug_print(f"Platform: {sys.platform}")
+    debug_print(f"Current directory: {Path.cwd()}")
+
     console.print(Panel.fit("[bold]Refactor Kit - Project Initialization[/bold]"))
 
     # Determine target directory
+    debug_print(f"here={here}, project_name={project_name}")
     if here or project_name == ".":
         target_dir = Path.cwd()
+        debug_print(f"Target directory (current): {target_dir}")
         console.print(f"Initializing in current directory: {target_dir}")
     elif project_name:
         target_dir = Path.cwd() / project_name
+        debug_print(f"Target directory (new): {target_dir}")
         if target_dir.exists() and not force:
             console.print(
                 f"[red]Error:[/red] Directory '{project_name}' already exists. Use --force to overwrite."
@@ -146,16 +168,20 @@ def init(
     (refactor_dir / "templates").mkdir(parents=True, exist_ok=True)
     (refactor_dir / "refactorings").mkdir(parents=True, exist_ok=True)
 
+    debug_print(f"Created .refactor directory structure")
     console.print(f"[green]✓[/green] Created project structure at {target_dir}")
 
     # Initialize git if not disabled
+    debug_print(f"no_git={no_git}, .git exists={(target_dir / '.git').exists()}")
     if not no_git and not (target_dir / ".git").exists():
         import subprocess
 
+        debug_print("Initializing git repository")
         subprocess.run(["git", "init"], cwd=target_dir, capture_output=True)
         console.print("[green]✓[/green] Initialized git repository")
 
     # Set up AI agent commands if specified
+    debug_print(f"ai_assistant={ai_assistant}")
     if ai_assistant:
         if ai_assistant not in AGENT_CONFIG:
             console.print(
@@ -176,6 +202,7 @@ def init(
 
         # Create agent commands directory
         agent_dir = target_dir / config["folder"]
+        debug_print(f"Creating agent directory: {agent_dir}")
         agent_dir.mkdir(parents=True, exist_ok=True)
         console.print(f"[green]✓[/green] Set up {config['name']} commands directory")
 
