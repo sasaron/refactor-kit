@@ -1,12 +1,27 @@
-# Refactoring-Driven Development (RDD)
+# Refactoring for AI-Enabled Development
+
+## Why Refactoring is Essential for AI Collaboration
+
+AI coding assistants are transforming how we develop software. However, their effectiveness depends heavily on **code quality**. AI models work best with:
+
+- **Clean, modular code** that has clear boundaries
+- **Self-documenting naming** that expresses intent
+- **Low coupling** between components
+- **High cohesion** within modules
+- **Comprehensive tests** that verify behavior
+
+Legacy codebases often lack these qualities. Without systematic refactoring, teams struggle to leverage AI assistance effectively. **Refactor Kit** provides a structured approach to prepare your codebase for AI-enabled development.
 
 ## The Power of Systematic Refactoring
 
-For decades, refactoring has been treated as an afterthought—something we do when the code becomes "too messy" or when we have "spare time." But what if we inverted this relationship? What if **refactoring became the driving force** of software evolution, not just a maintenance task?
+For decades, refactoring has been treated as an afterthought—something we do when the code becomes "too messy" or when we have "spare time." But in the age of AI-assisted development, this relationship must be inverted. **Refactoring becomes essential** for enabling effective AI collaboration.
 
-Refactoring-Driven Development (RDD) transforms refactoring from a reactive cleanup activity into a **proactive, strategic practice**. It's not about fixing code that's already broken—it's about continuously evolving code toward its optimal structure while maintaining behavior.
+Systematic refactoring transforms codebases from AI-hostile to AI-friendly:
 
-## The RDD Workflow in Practice
+- **Before**: AI struggles with tangled dependencies and unclear context
+- **After**: AI provides accurate suggestions based on clear code structure
+
+## The Refactoring Workflow
 
 The workflow begins with **analysis**—understanding the current state of the codebase before making any changes. Through systematic examination with AI assistance, you map dependencies, identify code smells, and assess risk. What might take days of manual code review happens in hours of focused analysis.
 
@@ -153,9 +168,22 @@ Individual refactoring moves (Extract Method, Move Class) must serve a larger go
 - **Hide Delegate**: Law of Demeter violations → proper encapsulation
 - **Replace Dependency**: Tight coupling → loose coupling
 
-## The Role of AI in RDD
+## AI as a Refactoring Partner
 
-AI enhances every phase of refactoring:
+AI enhances every phase of refactoring, but the relationship is bidirectional:
+
+**AI helps with refactoring:**
+- Pattern Recognition: Identify code smells at scale
+- Dependency Analysis: Map complex relationships
+- Risk Assessment: Predict refactoring difficulty
+- Code Transformation: Implement refactoring moves
+- Test Generation: Create characterization tests
+
+**Refactoring helps AI work better:**
+- Cleaner code means more accurate suggestions
+- Clear boundaries help AI understand context
+- Good naming provides better semantic understanding
+- Modular structure enables focused changes
 
 ### Analysis
 - **Pattern Recognition**: Identify code smells at scale
@@ -221,12 +249,13 @@ Without a strategy, individual refactoring moves may not add up to improvement.
 
 ## The Transformation
 
-Refactoring-Driven Development transforms how we think about code evolution:
+Systematic refactoring transforms how teams work with AI:
 
+- **From AI-hostile to AI-friendly**: Code that AI can understand and work with effectively
 - **From reactive to proactive**: Improve code before it becomes problematic
 - **From intuition to analysis**: Data-driven refactoring decisions
 - **From risky to safe**: Systematic verification at every step
 - **From big-bang to incremental**: Continuous small improvements
 - **From individual to team**: Shared strategy and visible progress
 
-This isn't about replacing developer judgment—it's about amplifying it with AI-powered analysis, systematic methodology, and continuous verification. The result is code that evolves toward its optimal structure while maintaining the trust of behavior preservation.
+This isn't about replacing developer judgment—it's about enabling effective AI collaboration through code quality. The result is code that both AI assistants and human developers can work with confidently, evolving toward its optimal structure while maintaining behavior.

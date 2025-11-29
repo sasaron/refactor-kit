@@ -2,9 +2,9 @@
 
 ## About Refactor Kit and Refactor CLI
 
-**Refactor Kit** is a comprehensive toolkit for implementing Refactoring-Driven Development (RDD) - a methodology that emphasizes systematic analysis and safe code transformation. The toolkit includes templates, scripts, and workflows that guide development teams through a structured approach to improving existing software.
+**Refactor Kit** is a comprehensive toolkit for systematic code refactoring that enables effective AI-assisted development. Clean, well-structured code is essential for AI coding assistants to provide accurate suggestions and work effectively with your codebase. The toolkit includes templates, scripts, and workflows that guide development teams through a structured approach to improving existing software for better AI collaboration.
 
-**Refactor CLI** is the command-line interface that bootstraps projects with the Refactor Kit framework. It sets up the necessary directory structures, templates, and AI agent integrations to support the Refactoring-Driven Development workflow.
+**Refactor CLI** is the command-line interface that bootstraps projects with the Refactor Kit framework. It sets up the necessary directory structures, templates, and AI agent integrations to support systematic refactoring workflows.
 
 The toolkit supports multiple AI coding assistants, allowing teams to use their preferred tools while maintaining consistent project structure and development practices.
 

@@ -1,17 +1,17 @@
 <div align="center">
     <h1>🔧 Refactor Kit</h1>
-    <h3><em>Improve existing software systematically.</em></h3>
+    <h3><em>Make your codebase AI-ready through systematic refactoring.</em></h3>
 </div>
 
 <p align="center">
-    <strong>An open source toolkit for structured, safe, and systematic code refactoring with AI assistance.</strong>
+    <strong>An open source toolkit for structured, safe, and systematic code refactoring that enables effective AI-assisted development.</strong>
 </p>
 
 ---
 
 ## Table of Contents
 
-- [🤔 What is Refactoring-Driven Development?](#-what-is-refactoring-driven-development)
+- [🤔 Why Refactoring is Essential for AI-Enabled Development](#-why-refactoring-is-essential-for-ai-enabled-development)
 - [⚡ Get Started](#-get-started)
 - [🤖 Supported AI Agents](#-supported-ai-agents)
 - [🔧 Refactor CLI Reference](#-refactor-cli-reference)
@@ -22,16 +22,20 @@
 - [👥 Maintainers](#-maintainers)
 - [📄 License](#-license)
 
-## 🤔 What is Refactoring-Driven Development?
+## 🤔 Why Refactoring is Essential for AI-Enabled Development
 
-Refactoring-Driven Development (RDD) **flips the script** on ad-hoc code improvements. Instead of making changes based on intuition or immediate needs, RDD provides a systematic approach where **analysis informs strategy, strategy drives planning, and planning guides execution**.
+AI coding assistants work best with **clean, well-structured code**. Legacy codebases with tangled dependencies, unclear responsibilities, and poor naming make it difficult for AI to understand context and provide accurate suggestions.
 
-### Key Principles
+**Refactor Kit** provides a systematic approach to prepare your codebase for effective AI collaboration:
 
-- **Analyze Before Acting**: Understand the current codebase structure, dependencies, and pain points
-- **Strategy Over Tactics**: Define clear refactoring goals and approaches before implementation
-- **Safe Transformations**: Ensure behavior preservation through comprehensive testing
-- **Incremental Progress**: Break large refactorings into manageable, verifiable steps
+- **Clear Structure**: AI understands modular, well-organized code better
+- **Reduced Complexity**: Simpler code means more accurate AI suggestions
+- **Better Naming**: Self-documenting code gives AI clearer context
+- **Isolated Components**: AI can work on independent units without side effects
+
+### The AI-Ready Codebase
+
+A codebase that is easy for AI to work with is also easier for humans to understand and maintain. This toolkit promotes systematic refactoring that benefits both AI assistants and human developers.
 
 ## ⚡ Get Started
 
@@ -120,7 +124,7 @@ Use **`/refactor.verify`** to ensure the refactoring is complete and behavior is
 /refactor.verify
 ```
 
-For detailed step-by-step instructions, see our [comprehensive guide](./refactor-driven.md).
+For detailed step-by-step instructions, see our [comprehensive guide](./ai-enabling-refactoring.md).
 
 ## 🤖 Supported AI Agents
 
@@ -172,13 +176,13 @@ After running `refactor init`, your AI coding agent will have access to these sl
 
 ## 📚 Core Philosophy
 
-Refactoring-Driven Development is a structured process that emphasizes:
+Systematic refactoring for AI-enabled development emphasizes:
 
 - **Analysis-first approach** where understanding precedes action
 - **Behavior preservation** as the non-negotiable constraint
 - **Incremental transformations** rather than big-bang rewrites
 - **Test-driven safety nets** to catch regressions early
-- **Heavy reliance** on AI capabilities for code analysis and transformation
+- **AI collaboration** as a key benefit of clean, well-structured code
 
 ## 🌟 Refactoring Phases
 
