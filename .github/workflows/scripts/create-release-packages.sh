@@ -12,10 +12,6 @@ if [[ -z "$NEW_VERSION" ]]; then
   echo "Or set NEW_VERSION environment variable" >&2
   exit 1
 fi
-if [[ ! $NEW_VERSION =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-  echo "Version must look like v0.0.0" >&2
-  exit 1
-fi
 
 echo "Building release package for $NEW_VERSION"
 
