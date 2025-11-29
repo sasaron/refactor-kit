@@ -5,12 +5,13 @@ set -euo pipefail
 # Build Refactor Kit release archives
 # Usage: .github/workflows/scripts/create-release-packages.sh <version>
 
-if [[ $# -ne 1 ]]; then
+NEW_VERSION="${1:-${NEW_VERSION}}"
+
+if [[ -z "$NEW_VERSION" ]]; then
   echo "Usage: $0 <version-with-v-prefix>" >&2
+  echo "Or set NEW_VERSION environment variable" >&2
   exit 1
 fi
-
-NEW_VERSION="$1"
 if [[ ! $NEW_VERSION =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   echo "Version must look like v0.0.0" >&2
   exit 1

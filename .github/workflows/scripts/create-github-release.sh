@@ -5,12 +5,13 @@ set -euo pipefail
 # Create a GitHub release with release package
 # Usage: create-github-release.sh <version>
 
-if [[ $# -ne 1 ]]; then
+VERSION="${1:-${NEW_VERSION}}"
+
+if [[ -z "$VERSION" ]]; then
   echo "Usage: $0 <version>" >&2
+  echo "Or set NEW_VERSION environment variable" >&2
   exit 1
 fi
-
-VERSION="$1"
 
 # Remove 'v' prefix from version for release title
 VERSION_NO_V=${VERSION#v}

@@ -2,28 +2,37 @@
 set -euo pipefail
 
 # generate-release-notes.sh
-# Generate release notes from git history
+# Generate release notes from git history.
+# For v0.0.0 (initial release): includes up to 50 recent commits.
+# For other releases: includes all commits since the last tag.
 # Usage: generate-release-notes.sh <new_version> <last_tag>
 
-if [[ $# -ne 2 ]]; then
+NEW_VERSION="${1:-${NEW_VERSION}}"
+LAST_TAG="${2:-${LATEST_TAG}}"
+
+if [[ -z "$NEW_VERSION" ]] || [[ -z "$LAST_TAG" ]]; then
   echo "Usage: $0 <new_version> <last_tag>" >&2
+  echo "Or set NEW_VERSION and LATEST_TAG environment variables" >&2
   exit 1
 fi
 
-NEW_VERSION="$1"
-LAST_TAG="$2"
-
 # Get commits since last tag
 if [ "$LAST_TAG" = "v0.0.0" ]; then
-  # Check how many commits we have and use that as the limit
+  # For initial release, include up to 50 recent commits
   COMMIT_COUNT=$(git rev-list --count HEAD)
-  if [ "$COMMIT_COUNT" -gt 10 ]; then
-    COMMITS=$(git log --oneline --pretty=format:"- %s" HEAD~10..HEAD)
+  if [ "$COMMIT_COUNT" -gt 50 ]; then
+    COMMITS=$(git log --oneline --pretty=format:"- %s" -n 50)
+    COMMITS="$COMMITS\n- ... and $((COMMIT_COUNT - 50)) more commits"
   else
-    COMMITS=$(git log --oneline --pretty=format:"- %s" HEAD~$COMMIT_COUNT..HEAD 2>/dev/null || git log --oneline --pretty=format:"- %s")
+    COMMITS=$(git log --oneline --pretty=format:"- %s" -n "$COMMIT_COUNT")
   fi
 else
-  COMMITS=$(git log --oneline --pretty=format:"- %s" $LAST_TAG..HEAD)
+  COMMITS=$(git log --oneline --pretty=format:"- %s" "$LAST_TAG"..HEAD)
+fi
+
+# Check if COMMITS is empty
+if [ -z "$COMMITS" ]; then
+  COMMITS="- Initial release"
 fi
 
 # Create release notes

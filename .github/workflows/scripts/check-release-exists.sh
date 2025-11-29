@@ -5,12 +5,13 @@ set -euo pipefail
 # Check if a GitHub release already exists for the given version
 # Usage: check-release-exists.sh <version>
 
-if [[ $# -ne 1 ]]; then
+VERSION="${1:-${NEW_VERSION}}"
+
+if [[ -z "$VERSION" ]]; then
   echo "Usage: $0 <version>" >&2
+  echo "Or set NEW_VERSION environment variable" >&2
   exit 1
 fi
-
-VERSION="$1"
 
 if gh release view "$VERSION" >/dev/null 2>&1; then
   echo "exists=true" >> $GITHUB_OUTPUT
