@@ -19,6 +19,7 @@
 - [🌟 Refactoring Phases](#-refactoring-phases)
 - [📋 Detailed Process](#-detailed-process)
 - [🔧 Prerequisites](#-prerequisites)
+- [📖 Documentation](#-documentation)
 - [👥 Maintainers](#-maintainers)
 - [📄 License](#-license)
 
@@ -157,6 +158,7 @@ The `refactor` command supports the following options:
 | `--force` | Flag | Force merge/overwrite when initializing in current directory |
 | `--no-git` | Flag | Skip git repository initialization |
 | `--ignore-agent-tools` | Flag | Skip checks for AI agent tools |
+| `--debug` | Flag | Show verbose diagnostic output for troubleshooting |
 
 ### Available Slash Commands
 
@@ -293,6 +295,15 @@ This will:
 - [uv](https://docs.astral.sh/uv/) for package management
 - [Python 3.11+](https://www.python.org/downloads/)
 - [Git](https://git-scm.com/downloads)
+
+## 📖 Documentation
+
+For detailed documentation, see:
+
+- [Documentation Home](./docs/index.md) - Overview and core concepts
+- [Installation Guide](./docs/installation.md) - Detailed setup instructions
+- [Quick Start Guide](./docs/quickstart.md) - Step-by-step tutorial
+- [Refactoring Methodology](./ai-enabling-refactoring.md) - In-depth workflow guide
 
 ## 👥 Maintainers
 
