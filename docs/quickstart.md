@@ -153,5 +153,4 @@ After completing Phase 1:
 ## Next Steps
 
 - Read the [Installation Guide](installation.md) for detailed setup instructions
-- Check out the [Refactoring-Driven Development methodology](../ai-enabling-refactoring.md)
 - Explore the [source code on GitHub](https://github.com/sasaron/refactor-kit)

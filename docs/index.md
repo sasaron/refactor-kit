@@ -1,12 +1,12 @@
 # Refactor Kit
 
-*Prepare your codebase for AI-assisted development.*
+*Systematic, safe, and structured code refactoring toolkit.*
 
-**An effort to help developers systematically refactor codebases to enable more effective AI collaboration through Refactoring-Driven Development (RDD).**
+**A toolkit for performing systematic refactoring through clear phases: Analysis, Strategy, Planning, Execution, and Verification.**
 
-## What is Refactoring-Driven Development?
+## What is Systematic Refactoring?
 
-Refactoring-Driven Development (RDD) is a structured approach that prioritizes **clean, well-organized code** as the foundation for AI-assisted development. The core insight: AI assistants provide better suggestions when working with well-structured codebases.
+Systematic refactoring is a structured approach that emphasizes **understanding before action** and **behavior preservation** as core principles. By following a clear workflow, you can safely improve code structure while maintaining functionality.
 
 ## Getting Started
 
@@ -15,7 +15,7 @@ Refactoring-Driven Development (RDD) is a structured approach that prioritizes *
 
 ## Core Philosophy
 
-Refactoring-Driven Development emphasizes:
+Systematic refactoring emphasizes:
 
 - **Analysis-First**: Understand before refactoring
 - **Behavior Preservation**: Non-negotiable - all tests must pass

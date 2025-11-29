@@ -33,7 +33,6 @@ cp -r tests "$PACKAGE_DIR/"
 cp pyproject.toml "$PACKAGE_DIR/"
 cp README.md "$PACKAGE_DIR/"
 cp LICENSE "$PACKAGE_DIR/"
-cp ai-enabling-refactoring.md "$PACKAGE_DIR/"
 cp AGENTS.md "$PACKAGE_DIR/"
 [[ -f .gitignore ]] && cp .gitignore "$PACKAGE_DIR/"
 
