@@ -210,9 +210,7 @@ class TestInitAllAgents:
             patch("pathlib.Path.cwd", return_value=tmp_path),
             patch("refactor_cli.download_and_extract_template", side_effect=mock_download_and_extract),
         ):
-            result = runner.invoke(
-                app, ["init", "--here", "--ai", agent_key, "--no-git", "--ignore-agent-tools"]
-            )
+            result = runner.invoke(app, ["init", "--here", "--ai", agent_key, "--no-git", "--ignore-agent-tools"])
             assert result.exit_code == 0, f"init failed for {agent_key}: {result.stdout}"
             agent_path = tmp_path / expected_folder
             assert agent_path.exists(), f"Agent folder {expected_folder} not created for {agent_key}"
@@ -224,17 +222,14 @@ class TestInitAllAgents:
             patch("pathlib.Path.cwd", return_value=tmp_path),
             patch("refactor_cli.download_and_extract_template", side_effect=mock_download_and_extract),
         ):
-            result = runner.invoke(
-                app, ["init", "--here", "--ai", agent_key, "--no-git", "--ignore-agent-tools"]
-            )
+            result = runner.invoke(app, ["init", "--here", "--ai", agent_key, "--no-git", "--ignore-agent-tools"])
             assert result.exit_code == 0, f"init failed for {agent_key}: {result.stdout}"
 
             # Get expected folder from AGENT_CONFIG (strip trailing slash)
             expected_folder = AGENT_CONFIG[agent_key]["folder"].rstrip("/")
             agent_path = tmp_path / expected_folder
             assert agent_path.exists(), (
-                f"Agent folder mismatch for {agent_key}: "
-                f"expected {expected_folder}, but it doesn't exist"
+                f"Agent folder mismatch for {agent_key}: expected {expected_folder}, but it doesn't exist"
             )
 
     @pytest.mark.parametrize("agent_key", list(AGENT_CONFIG.keys()))
@@ -244,9 +239,7 @@ class TestInitAllAgents:
             patch("pathlib.Path.cwd", return_value=tmp_path),
             patch("refactor_cli.download_and_extract_template", side_effect=mock_download_and_extract),
         ):
-            result = runner.invoke(
-                app, ["init", "--here", "--ai", agent_key, "--no-git", "--ignore-agent-tools"]
-            )
+            result = runner.invoke(app, ["init", "--here", "--ai", agent_key, "--no-git", "--ignore-agent-tools"])
             assert result.exit_code == 0
             assert (tmp_path / ".refactor").exists(), f".refactor not created for {agent_key}"
             assert (tmp_path / ".refactor" / "memory").exists()
@@ -269,9 +262,7 @@ class TestInitAllAgents:
             patch("pathlib.Path.cwd", return_value=tmp_path),
             patch("refactor_cli.download_and_extract_template", side_effect=mock_download_and_extract),
         ):
-            result = runner.invoke(
-                app, ["init", project_name, "--ai", agent_key, "--no-git", "--ignore-agent-tools"]
-            )
+            result = runner.invoke(app, ["init", project_name, "--ai", agent_key, "--no-git", "--ignore-agent-tools"])
             assert result.exit_code == 0, f"init failed for {agent_key}: {result.stdout}"
             project_path = tmp_path / project_name
             agent_path = project_path / expected_folder
@@ -462,9 +453,7 @@ class TestMergeJsonFiles:
         import json
 
         existing_file = tmp_path / "existing.json"
-        existing_file.write_text(
-            json.dumps({"parent": {"child1": "value1", "child2": "value2"}})
-        )
+        existing_file.write_text(json.dumps({"parent": {"child1": "value1", "child2": "value2"}}))
 
         new_content = {"parent": {"child2": "updated", "child3": "value3"}}
         result = merge_json_files(existing_file, new_content)
@@ -574,9 +563,7 @@ class TestInitEdgeCases:
         (tmp_path / project_name).mkdir()
 
         with patch("pathlib.Path.cwd", return_value=tmp_path):
-            result = runner.invoke(
-                app, ["init", project_name, "--ai", "claude", "--no-git", "--ignore-agent-tools"]
-            )
+            result = runner.invoke(app, ["init", project_name, "--ai", "claude", "--no-git", "--ignore-agent-tools"])
             assert result.exit_code == 1
             assert "Directory Conflict" in result.stdout or "already exists" in result.stdout
 
@@ -601,9 +588,7 @@ class TestInitEdgeCases:
     def test_init_both_project_name_and_here_flag_fails(self, tmp_path):
         """Test that specifying both project name and --here fails."""
         with patch("pathlib.Path.cwd", return_value=tmp_path):
-            result = runner.invoke(
-                app, ["init", "project-name", "--here", "--ai", "claude"]
-            )
+            result = runner.invoke(app, ["init", "project-name", "--here", "--ai", "claude"])
             assert result.exit_code == 1
             assert "Cannot specify both" in result.stdout
 
@@ -613,9 +598,7 @@ class TestInitEdgeCases:
             patch("pathlib.Path.cwd", return_value=tmp_path),
             patch("shutil.which", return_value=None),
         ):
-            result = runner.invoke(
-                app, ["init", "--here", "--ai", "claude", "--no-git"]
-            )
+            result = runner.invoke(app, ["init", "--here", "--ai", "claude", "--no-git"])
             assert result.exit_code == 1
             assert "Agent Detection Error" in result.stdout or "not found" in result.stdout
 
@@ -630,9 +613,7 @@ class TestInitEdgeCases:
             patch("refactor_cli.download_and_extract_template", side_effect=mock_download_and_extract),
         ):
             # --force is needed because git init creates .git directory making it non-empty
-            result = runner.invoke(
-                app, ["init", "--here", "--force", "--ai", "claude", "--ignore-agent-tools"]
-            )
+            result = runner.invoke(app, ["init", "--here", "--force", "--ai", "claude", "--ignore-agent-tools"])
             assert result.exit_code == 0
             assert "existing repo detected" in result.stdout
 
@@ -642,9 +623,7 @@ class TestInitEdgeCases:
             patch("pathlib.Path.cwd", return_value=tmp_path),
             patch("refactor_cli.download_and_extract_template", side_effect=mock_download_and_extract),
         ):
-            result = runner.invoke(
-                app, ["init", "--here", "--ai", "claude", "--no-git", "--ignore-agent-tools"]
-            )
+            result = runner.invoke(app, ["init", "--here", "--ai", "claude", "--no-git", "--ignore-agent-tools"])
             assert result.exit_code == 0
             assert "Agent Folder Security" in result.stdout
 
@@ -654,9 +633,7 @@ class TestInitEdgeCases:
             patch("pathlib.Path.cwd", return_value=tmp_path),
             patch("refactor_cli.download_and_extract_template", side_effect=mock_download_and_extract),
         ):
-            result = runner.invoke(
-                app, ["init", "--here", "--ai", "claude", "--no-git", "--ignore-agent-tools"]
-            )
+            result = runner.invoke(app, ["init", "--here", "--ai", "claude", "--no-git", "--ignore-agent-tools"])
             assert result.exit_code == 0
             assert "Next Steps" in result.stdout
 
@@ -781,9 +758,7 @@ class TestHandleVscodeSettings:
         dest_vscode.mkdir(parents=True)
         dest_settings = dest_vscode / "settings.json"
 
-        handle_vscode_settings(
-            source_settings, dest_settings, Path(".vscode/settings.json")
-        )
+        handle_vscode_settings(source_settings, dest_settings, Path(".vscode/settings.json"))
 
         assert dest_settings.exists()
         content = json.loads(dest_settings.read_text())
@@ -805,9 +780,7 @@ class TestHandleVscodeSettings:
         dest_settings = dest_vscode / "settings.json"
         dest_settings.write_text(json.dumps({"editor.tabSize": 2}))
 
-        handle_vscode_settings(
-            source_settings, dest_settings, Path(".vscode/settings.json")
-        )
+        handle_vscode_settings(source_settings, dest_settings, Path(".vscode/settings.json"))
 
         content = json.loads(dest_settings.read_text())
         assert content["editor.fontSize"] == 14
