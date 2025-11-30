@@ -668,7 +668,11 @@ def download_template_from_github(
             if response.status_code != 200:
                 error_msg = _format_rate_limit_error(response.status_code, response.headers, download_url)
                 if debug:
-                    error_msg += f"\n\n[dim]Response body (truncated 400):[/dim]\n{response.text[:400]}"
+                    try:
+                        error_body = response.text[:400]
+                    except UnicodeDecodeError:
+                        error_body = repr(response.content[:400])
+                    error_msg += f"\n\n[dim]Response body (truncated 400):[/dim]\n{error_body}"
                 raise RuntimeError(error_msg)
             total_size = int(response.headers.get('content-length', 0))
             with open(zip_path, 'wb') as f:
