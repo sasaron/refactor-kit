@@ -135,7 +135,9 @@ class TestInit:
             patch("pathlib.Path.cwd", return_value=tmp_path),
             patch("refactor_cli.download_and_extract_template", side_effect=mock_download_and_extract),
         ):
-            result = runner.invoke(app, ["init", "--here", "--ai", "claude", "--no-git", "--ignore-agent-tools", "--debug"])
+            result = runner.invoke(
+                app, ["init", "--here", "--ai", "claude", "--no-git", "--ignore-agent-tools", "--debug"]
+            )
             assert result.exit_code == 0
             assert "[DEBUG]" in result.stdout
             assert "Python version" in result.stdout
