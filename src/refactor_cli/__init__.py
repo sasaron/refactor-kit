@@ -518,6 +518,7 @@ def init(
     for key, label in [
         ("structure", "Create project structure"),
         ("agent-dir", "Set up agent commands directory"),
+        ("gitignore", "Update .gitignore"),
         ("git", "Initialize git repository"),
         ("final", "Finalize"),
     ]:
@@ -546,6 +547,25 @@ def init(
             agent_dir = target_dir / config["folder"]
             agent_dir.mkdir(parents=True, exist_ok=True)
             tracker.complete("agent-dir", config["folder"])
+
+            # Add agent folder to .gitignore for security
+            tracker.start("gitignore")
+            gitignore_path = target_dir / ".gitignore"
+            # Get the root agent folder (e.g., ".claude" from ".claude/commands/")
+            agent_root = config["folder"].split("/")[0]
+            agent_pattern = f"{agent_root}/"
+
+            if gitignore_path.exists():
+                content = gitignore_path.read_text()
+                if agent_pattern not in content:
+                    with gitignore_path.open("a") as f:
+                        f.write(f"\n# AI agent folder (may contain credentials)\n{agent_pattern}\n")
+                    tracker.complete("gitignore", f"added {agent_pattern}")
+                else:
+                    tracker.complete("gitignore", "already configured")
+            else:
+                gitignore_path.write_text(f"# AI agent folder (may contain credentials)\n{agent_pattern}\n")
+                tracker.complete("gitignore", f"created with {agent_pattern}")
 
             # Initialize git
             if not no_git:
