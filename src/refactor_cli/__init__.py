@@ -359,7 +359,7 @@ def callback(ctx: typer.Context):
         console.print()
 
 
-def check_tool(tool: str, install_url: str | None = None, tracker: StepTracker = None) -> bool:
+def check_tool(tool: str, install_url: str | None = None, tracker: StepTracker | None = None) -> bool:
     """Check if a tool is installed and available in PATH."""
     result = shutil.which(tool)
     if result:
