@@ -226,10 +226,6 @@ def select_with_arrows(options: dict, prompt_text: str = "Select an option", def
 
     run_selection_loop()
 
-    if selected_key is None:
-        console.print("\n[red]Selection failed.[/red]")
-        raise typer.Exit(1)
-
     return selected_key
 
 
