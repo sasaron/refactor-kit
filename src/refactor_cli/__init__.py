@@ -479,6 +479,114 @@ def merge_json_files(existing_path: Path, new_content: dict, verbose: bool = Fal
     return merged
 
 
+def _merge_item_to_dest(
+    item: Path,
+    dest_path: Path,
+    verbose: bool,
+    tracker: "StepTracker | None"
+) -> None:
+    """Copy or merge a single item (file or directory) to the destination."""
+    if item.is_dir():
+        if dest_path.exists():
+            if verbose and not tracker:
+                console.print(f"[yellow]Merging directory:[/yellow] {item.name}")
+            for sub_item in item.rglob('*'):
+                if not sub_item.is_file():
+                    continue
+                rel_path = sub_item.relative_to(item)
+                dest_file = dest_path / rel_path
+                dest_file.parent.mkdir(parents=True, exist_ok=True)
+                if dest_file.name == "settings.json" and dest_file.parent.name == ".vscode":
+                    handle_vscode_settings(sub_item, dest_file, rel_path, verbose, tracker)
+                else:
+                    shutil.copy2(sub_item, dest_file)
+        else:
+            shutil.copytree(item, dest_path)
+    else:
+        if dest_path.exists() and verbose and not tracker:
+            console.print(f"[yellow]Overwriting file:[/yellow] {item.name}")
+        shutil.copy2(item, dest_path)
+
+
+def _get_source_dir_from_extracted(
+    extracted_items: list[Path],
+    base_path: Path,
+    verbose: bool,
+    tracker: "StepTracker | None"
+) -> Path:
+    """If extracted items contain a single nested directory, return it; otherwise return base_path."""
+    if len(extracted_items) == 1 and extracted_items[0].is_dir():
+        if tracker:
+            tracker.add("flatten", "Flatten nested directory")
+            tracker.complete("flatten")
+        elif verbose:
+            console.print("[cyan]Found nested directory structure[/cyan]")
+        return extracted_items[0]
+    return base_path
+
+
+def _extract_and_merge_to_current_dir(
+    zip_ref: zipfile.ZipFile,
+    project_path: Path,
+    verbose: bool,
+    tracker: "StepTracker | None"
+) -> None:
+    """Extract ZIP to temp directory and merge contents into current directory."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_path = Path(temp_dir)
+        zip_ref.extractall(temp_path)
+
+        extracted_items = list(temp_path.iterdir())
+        if tracker:
+            tracker.start("extracted-summary")
+            tracker.complete("extracted-summary", f"temp {len(extracted_items)} items")
+        elif verbose:
+            console.print(f"[cyan]Extracted {len(extracted_items)} items to temp location[/cyan]")
+
+        source_dir = _get_source_dir_from_extracted(extracted_items, temp_path, verbose, tracker)
+
+        for item in source_dir.iterdir():
+            dest_path = project_path / item.name
+            _merge_item_to_dest(item, dest_path, verbose, tracker)
+
+        if verbose and not tracker:
+            console.print("[cyan]Template files merged into current directory[/cyan]")
+
+
+def _extract_to_new_directory(
+    zip_ref: zipfile.ZipFile,
+    project_path: Path,
+    verbose: bool,
+    tracker: "StepTracker | None"
+) -> None:
+    """Extract ZIP directly to project path and flatten if needed."""
+    zip_ref.extractall(project_path)
+
+    extracted_items = list(project_path.iterdir())
+    if tracker:
+        tracker.start("extracted-summary")
+        tracker.complete("extracted-summary", f"{len(extracted_items)} top-level items")
+    elif verbose:
+        console.print(f"[cyan]Extracted {len(extracted_items)} items to {project_path}:[/cyan]")
+        for item in extracted_items:
+            console.print(f"  - {item.name} ({'dir' if item.is_dir() else 'file'})")
+
+    # Flatten if there's a single nested directory
+    if len(extracted_items) == 1 and extracted_items[0].is_dir():
+        nested_dir = extracted_items[0]
+        temp_move_dir = project_path.parent / f"{project_path.name}_temp"
+
+        shutil.move(str(nested_dir), str(temp_move_dir))
+        project_path.rmdir()
+        shutil.move(str(temp_move_dir), str(project_path))
+
+        if tracker:
+            tracker.add("flatten", "Flatten nested directory")
+            tracker.complete("flatten")
+        elif verbose:
+            console.print("[cyan]Flattened nested directory structure[/cyan]")
+
+
 def download_template_from_github(
     ai_assistant: str,
     download_dir: Path,
@@ -661,74 +769,9 @@ def download_and_extract_template(
                 console.print(f"[cyan]ZIP contains {len(zip_contents)} items[/cyan]")
 
             if is_current_dir:
-                with tempfile.TemporaryDirectory() as temp_dir:
-                    temp_path = Path(temp_dir)
-                    zip_ref.extractall(temp_path)
-
-                    extracted_items = list(temp_path.iterdir())
-                    if tracker:
-                        tracker.start("extracted-summary")
-                        tracker.complete("extracted-summary", f"temp {len(extracted_items)} items")
-                    elif verbose:
-                        console.print(f"[cyan]Extracted {len(extracted_items)} items to temp location[/cyan]")
-
-                    source_dir = temp_path
-                    if len(extracted_items) == 1 and extracted_items[0].is_dir():
-                        source_dir = extracted_items[0]
-                        if tracker:
-                            tracker.add("flatten", "Flatten nested directory")
-                            tracker.complete("flatten")
-                        elif verbose:
-                            console.print("[cyan]Found nested directory structure[/cyan]")
-
-                    for item in source_dir.iterdir():
-                        dest_path = project_path / item.name
-                        if item.is_dir():
-                            if dest_path.exists():
-                                if verbose and not tracker:
-                                    console.print(f"[yellow]Merging directory:[/yellow] {item.name}")
-                                for sub_item in item.rglob('*'):
-                                    if sub_item.is_file():
-                                        rel_path = sub_item.relative_to(item)
-                                        dest_file = dest_path / rel_path
-                                        dest_file.parent.mkdir(parents=True, exist_ok=True)
-                                        if dest_file.name == "settings.json" and dest_file.parent.name == ".vscode":
-                                            handle_vscode_settings(sub_item, dest_file, rel_path, verbose, tracker)
-                                        else:
-                                            shutil.copy2(sub_item, dest_file)
-                            else:
-                                shutil.copytree(item, dest_path)
-                        else:
-                            if dest_path.exists() and verbose and not tracker:
-                                console.print(f"[yellow]Overwriting file:[/yellow] {item.name}")
-                            shutil.copy2(item, dest_path)
-                    if verbose and not tracker:
-                        console.print("[cyan]Template files merged into current directory[/cyan]")
+                _extract_and_merge_to_current_dir(zip_ref, project_path, verbose, tracker)
             else:
-                zip_ref.extractall(project_path)
-
-                extracted_items = list(project_path.iterdir())
-                if tracker:
-                    tracker.start("extracted-summary")
-                    tracker.complete("extracted-summary", f"{len(extracted_items)} top-level items")
-                elif verbose:
-                    console.print(f"[cyan]Extracted {len(extracted_items)} items to {project_path}:[/cyan]")
-                    for item in extracted_items:
-                        console.print(f"  - {item.name} ({'dir' if item.is_dir() else 'file'})")
-
-                if len(extracted_items) == 1 and extracted_items[0].is_dir():
-                    nested_dir = extracted_items[0]
-                    temp_move_dir = project_path.parent / f"{project_path.name}_temp"
-
-                    shutil.move(str(nested_dir), str(temp_move_dir))
-                    project_path.rmdir()
-                    shutil.move(str(temp_move_dir), str(project_path))
-
-                    if tracker:
-                        tracker.add("flatten", "Flatten nested directory")
-                        tracker.complete("flatten")
-                    elif verbose:
-                        console.print("[cyan]Flattened nested directory structure[/cyan]")
+                _extract_to_new_directory(zip_ref, project_path, verbose, tracker)
 
     except Exception as e:
         if tracker:
