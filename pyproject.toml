@@ -2,7 +2,7 @@
 name = "refactor-cli"
 version = "0.0.4"
 description = "Refactor CLI, part of Refactor Kit. A tool to bootstrap your projects for Refactoring-Driven Development (RDD)."
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = [
     "typer",
     "rich",
@@ -25,4 +25,34 @@ packages = ["src/refactor_cli"]
 [dependency-groups]
 dev = [
     "pytest>=9.0.1",
+    "ruff>=0.8.0",
 ]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 120
+
+[tool.ruff.lint]
+select = [
+    "E",      # pycodestyle errors
+    "W",      # pycodestyle warnings
+    "F",      # Pyflakes
+    "I",      # isort
+    "B",      # flake8-bugbear
+    "C4",     # flake8-comprehensions
+    "UP",     # pyupgrade
+    "SIM",    # flake8-simplify
+    "RUF",    # Ruff-specific
+]
+ignore = [
+    "E501",   # Line too long (formatter handles)
+    "B008",   # Function call in default arg (typer pattern)
+    "B904",   # raise-without-from in except (typer.Exit is control flow)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["refactor_cli"]
+
+[tool.ruff.format]
+quote-style = "double"
+line-ending = "lf"
