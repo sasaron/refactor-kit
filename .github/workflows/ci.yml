@@ -79,7 +79,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run ShellCheck
-        uses: ludeeus/action-shellcheck@master
+        uses: reviewdog/action-shellcheck@v1.32.0
         with:
-          scandir: ".github/workflows/scripts"
-          severity: warning
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-check
+          path: ".github/workflows/scripts"
+          pattern: "*.sh"
+          level: warning
+          fail_level: error
