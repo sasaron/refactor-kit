@@ -9,6 +9,7 @@ import sys
 import tempfile
 import zipfile
 from datetime import datetime, timezone
+from importlib.metadata import version, PackageNotFoundError
 from pathlib import Path
 from typing import Optional, Tuple
 
@@ -26,7 +27,10 @@ from rich.text import Text
 from rich.tree import Tree
 from typer.core import TyperGroup
 
-__version__ = "0.0.4"
+try:
+    __version__ = version("refactor-cli")
+except PackageNotFoundError:
+    __version__ = "0.0.0-dev"
 
 # Lazy-initialized HTTP client to avoid creating connections at import time
 _http_client: httpx.Client | None = None
