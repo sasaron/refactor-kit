@@ -1001,20 +1001,19 @@ def init(
         try:
             verify = not skip_tls
             local_ssl_context = ssl_context if verify else False
-            local_client = httpx.Client(verify=local_ssl_context)
+            with httpx.Client(verify=local_ssl_context) as local_client:
+                download_and_extract_template(
+                    target_dir,
+                    selected_ai,
+                    here,
+                    verbose=False,
+                    tracker=tracker,
+                    http_client=local_client,
+                    debug=debug,
+                    github_token=github_token
+                )
 
-            download_and_extract_template(
-                target_dir,
-                selected_ai,
-                here,
-                verbose=False,
-                tracker=tracker,
-                http_client=local_client,
-                debug=debug,
-                github_token=github_token
-            )
-
-            ensure_executable_scripts(target_dir, tracker=tracker)
+                ensure_executable_scripts(target_dir, tracker=tracker)
 
             # Initialize git
             if not no_git:
