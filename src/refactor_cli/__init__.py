@@ -26,10 +26,22 @@ from rich.text import Text
 from rich.tree import Tree
 from typer.core import TyperGroup
 
-ssl_context = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-client = httpx.Client(verify=ssl_context)
-
 __version__ = "0.0.4"
+
+# Lazy-initialized HTTP client to avoid creating connections at import time
+_http_client: httpx.Client | None = None
+
+
+def _get_http_client(skip_tls: bool = False) -> httpx.Client:
+    """Get or create an HTTP client with configurable TLS verification."""
+    global _http_client
+    if skip_tls:
+        # Always create a new client when TLS verification is skipped
+        return httpx.Client(verify=False)
+    if _http_client is None:
+        ssl_ctx = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        _http_client = httpx.Client(verify=ssl_ctx)
+    return _http_client
 
 
 def _github_token(cli_token: str | None = None) -> str | None:
@@ -477,7 +489,7 @@ def download_template_from_github(
     repo_owner = "sasaron"
     repo_name = "refactor-kit"
     if http_client is None:
-        http_client = client
+        http_client = _get_http_client()
 
     if verbose:
         console.print("[cyan]Fetching latest release information...[/cyan]")
@@ -999,9 +1011,11 @@ def init(
         tracker.attach_refresh(lambda: live.update(tracker.render()))
 
         try:
-            verify = not skip_tls
-            local_ssl_context = ssl_context if verify else False
-            with httpx.Client(verify=local_ssl_context) as local_client:
+            if skip_tls:
+                ssl_verify = False
+            else:
+                ssl_verify = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+            with httpx.Client(verify=ssl_verify) as local_client:
                 download_and_extract_template(
                     target_dir,
                     selected_ai,
