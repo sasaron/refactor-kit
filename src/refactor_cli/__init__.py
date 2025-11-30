@@ -237,11 +237,10 @@ class StepTracker:
                     line = f"{symbol} [bright_black]{label} ({detail_text})[/bright_black]"
                 else:
                     line = f"{symbol} [bright_black]{label}[/bright_black]"
+            elif detail_text:
+                line = f"{symbol} [white]{label}[/white] [bright_black]({detail_text})[/bright_black]"
             else:
-                if detail_text:
-                    line = f"{symbol} [white]{label}[/white] [bright_black]({detail_text})[/bright_black]"
-                else:
-                    line = f"{symbol} [white]{label}[/white]"
+                line = f"{symbol} [white]{label}[/white]"
 
             tree.add(line)
         return tree
@@ -251,9 +250,9 @@ def get_key():
     """Get a single keypress in a cross-platform way using readchar."""
     key = readchar.readkey()
 
-    if key == readchar.key.UP or key == readchar.key.CTRL_P:
+    if key in (readchar.key.UP, readchar.key.CTRL_P):
         return "up"
-    if key == readchar.key.DOWN or key == readchar.key.CTRL_N:
+    if key in (readchar.key.DOWN, readchar.key.CTRL_N):
         return "down"
     if key == readchar.key.ENTER:
         return "enter"
@@ -369,14 +368,13 @@ def check_tool(tool: str, install_url: str | None = None, tracker: StepTracker =
         else:
             console.print(f"  [green]✓[/green] {tool} found at {result}")
         return True
+    if tracker:
+        tracker.error(tool, "not found")
     else:
-        if tracker:
-            tracker.error(tool, "not found")
-        else:
-            console.print(f"  [red]✗[/red] {tool} not found")
-            if install_url:
-                console.print(f"    Install from: {install_url}")
-        return False
+        console.print(f"  [red]✗[/red] {tool} not found")
+        if install_url:
+            console.print(f"    Install from: {install_url}")
+    return False
 
 
 def is_git_repo(path: Path | None = None) -> bool:
@@ -662,25 +660,23 @@ def download_template_from_github(
             total_size = int(response.headers.get("content-length", 0))
             with open(zip_path, "wb") as f:
                 if total_size == 0:
-                    for chunk in response.iter_bytes(chunk_size=8192):
-                        f.write(chunk)
-                else:
-                    if show_progress:
-                        with Progress(
-                            SpinnerColumn(),
-                            TextColumn("[progress.description]{task.description}"),
-                            TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
-                            console=console,
-                        ) as progress:
-                            task = progress.add_task("Downloading...", total=total_size)
-                            downloaded = 0
-                            for chunk in response.iter_bytes(chunk_size=8192):
-                                f.write(chunk)
-                                downloaded += len(chunk)
-                                progress.update(task, completed=downloaded)
-                    else:
+                    f.writelines(response.iter_bytes(chunk_size=8192))
+                elif show_progress:
+                    with Progress(
+                        SpinnerColumn(),
+                        TextColumn("[progress.description]{task.description}"),
+                        TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+                        console=console,
+                    ) as progress:
+                        task = progress.add_task("Downloading...", total=total_size)
+                        downloaded = 0
                         for chunk in response.iter_bytes(chunk_size=8192):
                             f.write(chunk)
+                            downloaded += len(chunk)
+                            progress.update(task, completed=downloaded)
+                else:
+                    for chunk in response.iter_bytes(chunk_size=8192):
+                        f.write(chunk)
     except Exception as e:
         console.print("[red]Error downloading template[/red]")
         detail = str(e)
@@ -729,9 +725,8 @@ def download_and_extract_template(
     except Exception as e:
         if tracker:
             tracker.error("fetch", str(e))
-        else:
-            if verbose:
-                console.print(f"[red]Error downloading template:[/red] {e}")
+        elif verbose:
+            console.print(f"[red]Error downloading template:[/red] {e}")
         raise
 
     if tracker:
@@ -760,11 +755,10 @@ def download_and_extract_template(
     except Exception as e:
         if tracker:
             tracker.error("extract", str(e))
-        else:
-            if verbose:
-                console.print(f"[red]Error extracting template:[/red] {e}")
-                if debug:
-                    console.print(Panel(str(e), title="Extraction Error", border_style="red"))
+        elif verbose:
+            console.print(f"[red]Error extracting template:[/red] {e}")
+            if debug:
+                console.print(Panel(str(e), title="Extraction Error", border_style="red"))
 
         if not is_current_dir and project_path.exists():
             shutil.rmtree(project_path)
