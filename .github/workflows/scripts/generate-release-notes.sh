@@ -1,4 +1,4 @@
-#\!/usr/bin/env bash
+#!/usr/bin/env bash
 set -euo pipefail
 
 NEW_VERSION="$1"
@@ -13,14 +13,14 @@ echo "Generating release notes for $NEW_VERSION..."
   echo ""
   echo "### Changes"
   echo ""
-  
+
   if [[ "$LATEST_TAG" == "v0.0.0" ]]; then
     echo "- Initial release"
   else
     # Get commit messages since last tag
     git log --pretty=format:"- %s" "$LATEST_TAG"..HEAD -- templates/ .github/workflows/ 2>/dev/null || echo "- Template updates"
   fi
-  
+
   echo ""
   echo "### Installation"
   echo ""
