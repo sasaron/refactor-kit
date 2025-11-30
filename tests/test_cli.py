@@ -26,6 +26,8 @@ from refactor_cli import (
     app,
     check_tool,
     debug_print,
+    download_and_extract_template,
+    download_template_from_github,
     ensure_executable_scripts,
     get_key,
     handle_vscode_settings,
@@ -1304,3 +1306,509 @@ class TestInitCommandPaths:
             result = runner.invoke(app, ["init", "--ai", "claude", "--no-git", "test-project"])
             # Should complete without git init
             assert "git init" not in result.output.lower() or result.exit_code == 0
+
+
+class TestDownloadTemplateFromGitHub:
+    """Tests for download_template_from_github function."""
+
+    def test_download_success(self, tmp_path):
+        """Test successful download from GitHub."""
+        import io
+        import zipfile
+
+        # Create a mock ZIP file in memory
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+            zf.writestr("test.txt", "test content")
+        zip_content = zip_buffer.getvalue()
+
+        mock_release_response = {
+            "tag_name": "v1.0.0",
+            "assets": [
+                {
+                    "name": "refactor-kit-template-claude-v1.0.0.zip",
+                    "browser_download_url": "https://example.com/download.zip",
+                    "size": len(zip_content),
+                }
+            ],
+        }
+
+        mock_client = patch.object(
+            _get_http_client(skip_tls=True).__class__,
+            "get",
+            return_value=type(
+                "Response",
+                (),
+                {"status_code": 200, "json": lambda: mock_release_response, "headers": {}},
+            )(),
+        )
+
+        # Create a proper mock HTTP client
+        class MockResponse:
+            status_code = 200
+            headers = {"content-length": str(len(zip_content))}
+
+            def json(self):
+                return mock_release_response
+
+            def iter_bytes(self, chunk_size=8192):
+                yield zip_content
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                pass
+
+        class MockClient:
+            def get(self, url, **kwargs):
+                return MockResponse()
+
+            def stream(self, method, url, **kwargs):
+                return MockResponse()
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                pass
+
+        zip_path, metadata = download_template_from_github(
+            "claude",
+            tmp_path,
+            verbose=False,
+            show_progress=False,
+            http_client=MockClient(),
+        )
+
+        assert zip_path.exists()
+        assert metadata["release"] == "v1.0.0"
+        assert metadata["filename"] == "refactor-kit-template-claude-v1.0.0.zip"
+
+    def test_download_no_matching_asset(self, tmp_path):
+        """Test error when no matching asset found."""
+        import typer
+
+        mock_release_response = {
+            "tag_name": "v1.0.0",
+            "assets": [
+                {
+                    "name": "some-other-file.zip",
+                    "browser_download_url": "https://example.com/other.zip",
+                    "size": 100,
+                }
+            ],
+        }
+
+        class MockResponse:
+            status_code = 200
+            headers = {}
+
+            def json(self):
+                return mock_release_response
+
+        class MockClient:
+            def get(self, url, **kwargs):
+                return MockResponse()
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                pass
+
+        with pytest.raises(typer.Exit):
+            download_template_from_github(
+                "claude",
+                tmp_path,
+                verbose=False,
+                show_progress=False,
+                http_client=MockClient(),
+            )
+
+    def test_download_empty_assets(self, tmp_path):
+        """Test error when release has no assets."""
+        import typer
+
+        mock_release_response = {
+            "tag_name": "v1.0.0",
+            "assets": [],
+        }
+
+        class MockResponse:
+            status_code = 200
+            headers = {}
+
+            def json(self):
+                return mock_release_response
+
+        class MockClient:
+            def get(self, url, **kwargs):
+                return MockResponse()
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                pass
+
+        with pytest.raises(typer.Exit):
+            download_template_from_github(
+                "claude",
+                tmp_path,
+                verbose=False,
+                show_progress=False,
+                http_client=MockClient(),
+            )
+
+    def test_download_api_error(self, tmp_path):
+        """Test error when GitHub API returns error."""
+        import typer
+
+        class MockResponse:
+            status_code = 403
+            headers = {"X-RateLimit-Remaining": "0"}
+            text = "Rate limit exceeded"
+
+        class MockClient:
+            def get(self, url, **kwargs):
+                return MockResponse()
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                pass
+
+        with pytest.raises(typer.Exit):
+            download_template_from_github(
+                "claude",
+                tmp_path,
+                verbose=False,
+                show_progress=False,
+                http_client=MockClient(),
+            )
+
+    def test_download_with_github_token(self, tmp_path):
+        """Test download includes authorization header when token provided."""
+        import io
+        import zipfile
+
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+            zf.writestr("test.txt", "test content")
+        zip_content = zip_buffer.getvalue()
+
+        mock_release_response = {
+            "tag_name": "v1.0.0",
+            "assets": [
+                {
+                    "name": "refactor-kit-template-claude-v1.0.0.zip",
+                    "browser_download_url": "https://example.com/download.zip",
+                    "size": len(zip_content),
+                }
+            ],
+        }
+
+        captured_headers = []
+
+        class MockResponse:
+            status_code = 200
+            headers = {"content-length": str(len(zip_content))}
+
+            def json(self):
+                return mock_release_response
+
+            def iter_bytes(self, chunk_size=8192):
+                yield zip_content
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                pass
+
+        class MockClient:
+            def get(self, url, **kwargs):
+                captured_headers.append(kwargs.get("headers", {}))
+                return MockResponse()
+
+            def stream(self, method, url, **kwargs):
+                captured_headers.append(kwargs.get("headers", {}))
+                return MockResponse()
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                pass
+
+        download_template_from_github(
+            "claude",
+            tmp_path,
+            verbose=False,
+            show_progress=False,
+            http_client=MockClient(),
+            github_token="test-token-123",
+        )
+
+        # Check that authorization header was included
+        assert any("Authorization" in h for h in captured_headers)
+        assert any("Bearer test-token-123" in str(h) for h in captured_headers)
+
+
+class TestDownloadAndExtractTemplate:
+    """Tests for download_and_extract_template function."""
+
+    def test_extract_to_new_project(self, tmp_path):
+        """Test extracting template to new project directory."""
+        import io
+        import zipfile
+
+        # Create a mock ZIP with template structure
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+            zf.writestr(".refactor/memory/.gitkeep", "")
+            zf.writestr(".refactor/templates/test.md", "# Test")
+            zf.writestr(".claude/commands/refactor.start.md", "# Start")
+        zip_content = zip_buffer.getvalue()
+
+        mock_release_response = {
+            "tag_name": "v1.0.0",
+            "assets": [
+                {
+                    "name": "refactor-kit-template-claude-v1.0.0.zip",
+                    "browser_download_url": "https://example.com/download.zip",
+                    "size": len(zip_content),
+                }
+            ],
+        }
+
+        class MockResponse:
+            status_code = 200
+            headers = {"content-length": str(len(zip_content))}
+
+            def json(self):
+                return mock_release_response
+
+            def iter_bytes(self, chunk_size=8192):
+                yield zip_content
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                pass
+
+        class MockClient:
+            def get(self, url, **kwargs):
+                return MockResponse()
+
+            def stream(self, method, url, **kwargs):
+                return MockResponse()
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                pass
+
+        project_path = tmp_path / "new-project"
+
+        with patch("pathlib.Path.cwd", return_value=tmp_path):
+            result = download_and_extract_template(
+                project_path,
+                "claude",
+                is_current_dir=False,
+                verbose=False,
+                http_client=MockClient(),
+            )
+
+        assert result == project_path
+        assert (project_path / ".refactor" / "memory").exists()
+        assert (project_path / ".refactor" / "templates" / "test.md").exists()
+        assert (project_path / ".claude" / "commands" / "refactor.start.md").exists()
+
+    def test_extract_to_current_dir_merges(self, tmp_path):
+        """Test extracting template to current directory merges with existing files."""
+        import io
+        import zipfile
+
+        # Create existing file in tmp_path
+        existing_file = tmp_path / "existing.txt"
+        existing_file.write_text("existing content")
+
+        # Create a mock ZIP with template structure
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+            zf.writestr(".refactor/memory/.gitkeep", "")
+            zf.writestr("new-file.txt", "new content")
+        zip_content = zip_buffer.getvalue()
+
+        mock_release_response = {
+            "tag_name": "v1.0.0",
+            "assets": [
+                {
+                    "name": "refactor-kit-template-claude-v1.0.0.zip",
+                    "browser_download_url": "https://example.com/download.zip",
+                    "size": len(zip_content),
+                }
+            ],
+        }
+
+        class MockResponse:
+            status_code = 200
+            headers = {"content-length": str(len(zip_content))}
+
+            def json(self):
+                return mock_release_response
+
+            def iter_bytes(self, chunk_size=8192):
+                yield zip_content
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                pass
+
+        class MockClient:
+            def get(self, url, **kwargs):
+                return MockResponse()
+
+            def stream(self, method, url, **kwargs):
+                return MockResponse()
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                pass
+
+        with patch("pathlib.Path.cwd", return_value=tmp_path):
+            result = download_and_extract_template(
+                tmp_path,
+                "claude",
+                is_current_dir=True,
+                verbose=False,
+                http_client=MockClient(),
+            )
+
+        assert result == tmp_path
+        # Existing file should still be there
+        assert existing_file.exists()
+        assert existing_file.read_text() == "existing content"
+        # New files should be added
+        assert (tmp_path / ".refactor" / "memory").exists()
+        assert (tmp_path / "new-file.txt").exists()
+
+    def test_extract_with_tracker(self, tmp_path):
+        """Test extraction with step tracker."""
+        import io
+        import zipfile
+
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+            zf.writestr(".refactor/memory/.gitkeep", "")
+        zip_content = zip_buffer.getvalue()
+
+        mock_release_response = {
+            "tag_name": "v1.0.0",
+            "assets": [
+                {
+                    "name": "refactor-kit-template-claude-v1.0.0.zip",
+                    "browser_download_url": "https://example.com/download.zip",
+                    "size": len(zip_content),
+                }
+            ],
+        }
+
+        class MockResponse:
+            status_code = 200
+            headers = {"content-length": str(len(zip_content))}
+
+            def json(self):
+                return mock_release_response
+
+            def iter_bytes(self, chunk_size=8192):
+                yield zip_content
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                pass
+
+        class MockClient:
+            def get(self, url, **kwargs):
+                return MockResponse()
+
+            def stream(self, method, url, **kwargs):
+                return MockResponse()
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                pass
+
+        tracker = StepTracker("Test")
+        tracker.add("fetch", "Fetch latest release")
+        tracker.add("download", "Download template")
+        tracker.add("extract", "Extract template")
+        tracker.add("zip-list", "Archive contents")
+        tracker.add("extracted-summary", "Extraction summary")
+        tracker.add("cleanup", "Cleanup")
+
+        project_path = tmp_path / "test-project"
+
+        with patch("pathlib.Path.cwd", return_value=tmp_path):
+            download_and_extract_template(
+                project_path,
+                "claude",
+                is_current_dir=False,
+                verbose=False,
+                tracker=tracker,
+                http_client=MockClient(),
+            )
+
+        # Check that tracker steps were updated
+        fetch_step = next((s for s in tracker.steps if s["key"] == "fetch"), None)
+        assert fetch_step is not None
+        assert fetch_step["status"] == "done"
+
+    def test_extract_download_error_cleans_up(self, tmp_path):
+        """Test that download error cleans up partially created directory."""
+        import typer
+
+        class MockResponse:
+            status_code = 500
+            headers = {}
+            text = "Internal Server Error"
+
+        class MockClient:
+            def get(self, url, **kwargs):
+                return MockResponse()
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                pass
+
+        project_path = tmp_path / "failed-project"
+
+        with (
+            patch("pathlib.Path.cwd", return_value=tmp_path),
+            pytest.raises(typer.Exit),
+        ):
+            download_and_extract_template(
+                project_path,
+                "claude",
+                is_current_dir=False,
+                verbose=False,
+                http_client=MockClient(),
+            )
+
+        # Directory should not exist after failed download
+        assert not project_path.exists()
