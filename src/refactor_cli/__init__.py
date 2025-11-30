@@ -135,8 +135,8 @@ class StepTracker:
         if self._refresh_cb:
             try:
                 self._refresh_cb()
-            except Exception:
-                pass
+            except Exception as e:
+                debug_print(f"Exception in refresh callback: {e}")
 
     def render(self):
         tree = Tree(f"[cyan]{self.title}[/cyan]", guide_style="grey50")
