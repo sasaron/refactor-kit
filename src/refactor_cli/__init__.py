@@ -71,24 +71,6 @@ AGENT_CONFIG = {
         "install_url": "https://cursor.sh/",
         "requires_cli": False,
     },
-    "qwen": {
-        "name": "Qwen Code",
-        "folder": ".qwen/commands/",
-        "install_url": "https://github.com/QwenLM/qwen-code",
-        "requires_cli": True,
-    },
-    "codex": {
-        "name": "Codex CLI",
-        "folder": ".codex/commands/",
-        "install_url": "https://github.com/openai/codex",
-        "requires_cli": True,
-    },
-    "windsurf": {
-        "name": "Windsurf",
-        "folder": ".windsurf/commands/",
-        "install_url": None,
-        "requires_cli": False,
-    },
 }
 
 
@@ -100,8 +82,8 @@ class StepTracker:
         self.steps = []  # list of dicts: {key, label, status, detail}
         self._refresh_cb = None
 
-    def attach_refresh(self, cb):
-        self._refresh_cb = cb
+    def attach_refresh(self, refresh_callback):
+        self._refresh_cb = refresh_callback
 
     def add(self, key: str, label: str):
         if key not in [s["key"] for s in self.steps]:
