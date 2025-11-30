@@ -1,60 +1,32 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# generate-release-notes.sh
-# Generate release notes from git history.
-# For v0.0.0 (initial release): includes up to 50 recent commits.
-# For other releases: includes all commits since the last tag.
-# Usage: generate-release-notes.sh <new_version> <last_tag>
+NEW_VERSION="$1"
+LATEST_TAG="$2"
 
-NEW_VERSION="${1:-${NEW_VERSION}}"
-LAST_TAG="${2:-${LATEST_TAG}}"
+NOTES_FILE=".genreleases/release_notes.md"
 
-if [[ -z "$NEW_VERSION" ]] || [[ -z "$LAST_TAG" ]]; then
-  echo "Usage: $0 <new_version> <last_tag>" >&2
-  echo "Or set NEW_VERSION and LATEST_TAG environment variables" >&2
-  exit 1
-fi
+echo "Generating release notes for $NEW_VERSION..."
 
-# Get commits since last tag
-if [ "$LAST_TAG" = "v0.0.0" ]; then
-  # For initial release, include up to 50 recent commits
-  COMMIT_COUNT=$(git rev-list --count HEAD)
-  if [ "$COMMIT_COUNT" -gt 50 ]; then
-    COMMITS=$(git log --oneline --pretty=format:"- %s" -n 50)
-    COMMITS="$COMMITS
-- ... and $((COMMIT_COUNT - 50)) more commits"
+{
+  echo "## Refactor Kit $NEW_VERSION"
+  echo ""
+  echo "### Changes"
+  echo ""
+
+  if [[ "$LATEST_TAG" == "v0.0.0" ]]; then
+    echo "- Initial release"
   else
-    COMMITS=$(git log --oneline --pretty=format:"- %s" -n "$COMMIT_COUNT")
+    # Get commit messages since last tag
+    git log --pretty=format:"- %s" "$LATEST_TAG"..HEAD -- templates/ .github/workflows/ 2>/dev/null || echo "- Template updates"
   fi
-else
-  COMMITS=$(git log --oneline --pretty=format:"- %s" "$LAST_TAG"..HEAD)
-fi
 
-# Check if COMMITS is empty
-if [ -z "$COMMITS" ]; then
-  COMMITS="- Initial release"
-fi
+  echo ""
+  echo "### Installation"
+  echo ""
+  echo '```bash'
+  echo 'uvx --from git+https://github.com/sasaron/refactor-kit.git refactor init .'
+  echo '```'
+} > "$NOTES_FILE"
 
-# Create release notes
-cat > release_notes.md << EOF
-## Refactor Kit Release
-
-This release includes improvements and updates to Refactor Kit, a tool to bootstrap your projects for Refactoring-Driven Development (RDD).
-
-### What's New
-
-$COMMITS
-
----
-
-**Installation:**
-\`\`\`bash
-pip install refactor-cli
-\`\`\`
-
-**Or download the release package and install manually.**
-EOF
-
-echo "Generated release notes:"
-cat release_notes.md
+echo "Release notes written to $NOTES_FILE"

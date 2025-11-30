@@ -4,12 +4,9 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'memory/**'
-      - 'src/**'
       - 'templates/**'
-      - 'pyproject.toml'
+      - 'src/**'
       - '.github/workflows/**'
-      - '!.github/workflows/release.yml'
   workflow_dispatch:
 
 jobs:
@@ -18,43 +15,27 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Generate GitHub App token
-        id: app_token
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ secrets.APP_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
-
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ steps.app_token.outputs.token }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get latest tag
         id: get_tag
         run: .github/workflows/scripts/get-next-version.sh
 
-      - name: Validate version formats
-        run: |
-          echo "${{ steps.get_tag.outputs.latest_tag }}" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$' || (echo "Invalid latest_tag format" >&2 && exit 1)
-          echo "${{ steps.get_tag.outputs.new_version }}" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$' || (echo "Invalid new_version format" >&2 && exit 1)
-          echo "✓ Version formats validated"
-
       - name: Check if release already exists
         id: check_release
-        run: .github/workflows/scripts/check-release-exists.sh
+        run: .github/workflows/scripts/check-release-exists.sh ${{ steps.get_tag.outputs.new_version }}
         env:
-          NEW_VERSION: ${{ steps.get_tag.outputs.new_version }}
-          GITHUB_TOKEN: ${{ steps.app_token.outputs.token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update version in pyproject.toml
         if: steps.check_release.outputs.exists == 'false'
-        run: .github/workflows/scripts/update-version.sh
-        env:
-          NEW_VERSION: ${{ steps.get_tag.outputs.new_version }}
+        run: .github/workflows/scripts/update-version.sh ${{ steps.get_tag.outputs.new_version }}
 
-      - name: Commit and push version update
+      - name: Commit version bump
         if: steps.check_release.outputs.exists == 'false'
         run: |
           git config user.name "github-actions[bot]"
@@ -63,27 +44,17 @@ jobs:
           git commit -m "chore: bump version to ${{ steps.get_tag.outputs.new_version }} [skip ci]"
           git push
 
-          # Create tag on the version bump commit
-          git tag ${{ steps.get_tag.outputs.new_version }}
-          git push origin ${{ steps.get_tag.outputs.new_version }}
-
-      - name: Create release package
+      - name: Create release package variants
         if: steps.check_release.outputs.exists == 'false'
-        run: .github/workflows/scripts/create-release-packages.sh
-        env:
-          NEW_VERSION: ${{ steps.get_tag.outputs.new_version }}
+        run: .github/workflows/scripts/create-release-packages.sh ${{ steps.get_tag.outputs.new_version }}
 
       - name: Generate release notes
         if: steps.check_release.outputs.exists == 'false'
         id: release_notes
-        run: .github/workflows/scripts/generate-release-notes.sh
-        env:
-          NEW_VERSION: ${{ steps.get_tag.outputs.new_version }}
-          LATEST_TAG: ${{ steps.get_tag.outputs.latest_tag }}
+        run: .github/workflows/scripts/generate-release-notes.sh ${{ steps.get_tag.outputs.new_version }} ${{ steps.get_tag.outputs.latest_tag }}
 
       - name: Create GitHub Release
         if: steps.check_release.outputs.exists == 'false'
-        run: .github/workflows/scripts/create-github-release.sh
+        run: .github/workflows/scripts/create-github-release.sh ${{ steps.get_tag.outputs.new_version }}
         env:
-          NEW_VERSION: ${{ steps.get_tag.outputs.new_version }}
-          GITHUB_TOKEN: ${{ steps.app_token.outputs.token }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

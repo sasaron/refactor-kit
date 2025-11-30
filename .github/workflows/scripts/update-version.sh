@@ -1,32 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# update-version.sh
-# Update version in pyproject.toml
-# Usage: update-version.sh <version>
+NEW_VERSION="$1"
+VERSION_WITHOUT_V="${NEW_VERSION#v}"
 
-VERSION="${1:-${NEW_VERSION}}"
+echo "Updating pyproject.toml to version $VERSION_WITHOUT_V..."
 
-if [[ -z "$VERSION" ]]; then
-  echo "Usage: $0 <version>" >&2
-  echo "Or set NEW_VERSION environment variable" >&2
-  exit 1
-fi
+sed -i "s/^version = \".*\"/version = \"$VERSION_WITHOUT_V\"/" pyproject.toml
 
-# Remove 'v' prefix for Python versioning
-PYTHON_VERSION="${VERSION#v}"
-
-if [ -f "pyproject.toml" ]; then
-  # Use portable sed command (works on both macOS and Linux)
-  sed "s/version = \".*\"/version = \"$PYTHON_VERSION\"/" pyproject.toml > pyproject.toml.tmp && mv pyproject.toml.tmp pyproject.toml
-
-  # Verify the replacement worked
-  if grep -q "version = \"$PYTHON_VERSION\"" pyproject.toml; then
-    echo "Updated pyproject.toml version to $PYTHON_VERSION"
-  else
-    echo "Error: Failed to update version in pyproject.toml" >&2
-    exit 1
-  fi
-else
-  echo "Warning: pyproject.toml not found, skipping version update"
-fi
+echo "Version updated to $VERSION_WITHOUT_V"
