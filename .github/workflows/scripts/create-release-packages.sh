@@ -21,7 +21,7 @@ echo "Building release packages for $NEW_VERSION"
 # Create and use .genreleases directory for all build artifacts
 GENRELEASES_DIR=".genreleases"
 mkdir -p "$GENRELEASES_DIR"
-rm -rf "$GENRELEASES_DIR"/* || true
+rm -rf "${GENRELEASES_DIR:?}"/* || true
 
 # Agent configurations: agent_key -> folder_path
 declare -A AGENT_FOLDERS=(
