@@ -2,7 +2,7 @@
 name = "refactor-cli"
 version = "0.0.4"
 description = "Refactor CLI, part of Refactor Kit. A tool to bootstrap your projects for Refactoring-Driven Development (RDD)."
-requires-python = ">=3.11"
+requires-python = ">=3.13"
 dependencies = [
     "typer",
     "rich",
@@ -25,4 +25,65 @@ packages = ["src/refactor_cli"]
 [dependency-groups]
 dev = [
     "pytest>=9.0.1",
+    "ruff>=0.8.0",
 ]
+
+[tool.ruff]
+target-version = "py313"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    # Formatter conflicts
+    "E501",    # Line too long (formatter handles)
+    "COM812",  # Trailing comma (formatter conflict)
+    "ISC001",  # Implicit string concat (formatter conflict)
+    # Docstrings - too strict for existing code
+    "D100",    # Missing docstring in public module
+    "D101",    # Missing docstring in public class
+    "D102",    # Missing docstring in public method
+    "D103",    # Missing docstring in public function
+    "D104",    # Missing docstring in public package
+    "D105",    # Missing docstring in magic method
+    "D107",    # Missing docstring in __init__
+    # Type annotations - existing code lacks them
+    "ANN",     # All annotation rules
+    # Typer CLI patterns
+    "B008",    # Function call in default arg (typer.Option pattern)
+    "B904",    # raise-without-from (typer.Exit is control flow)
+    "FBT",     # Boolean trap (typer flags)
+    # Complexity - existing code is complex
+    "C901",    # Function too complex
+    "PLR0912", # Too many branches
+    "PLR0913", # Too many arguments
+    "PLR0915", # Too many statements
+    "PLR2004", # Magic value comparison
+    # Other intentional patterns
+    "BLE001",  # Blind except (intentional error handling)
+    "TRY003",  # Long exception message
+    "TRY300",  # Consider moving to else block
+    "TRY301",  # Abstract raise to inner function
+    "ERA001",  # Commented out code (false positives)
+    "PLW0603", # Global statement (intentional singleton pattern)
+    "PLW1510", # subprocess.run without check (intentional)
+    "S501",    # verify=False (--skip-tls option)
+    "S607",    # Partial executable path (git, etc.)
+    "S112",    # try-except-continue
+    "PLC0415", # Import not at top (lazy import)
+    "D401",    # Imperative mood in docstring
+    "INP001",  # Implicit namespace package (tests/)
+    "EM101",   # Exception message string literal
+    "EM102",   # Exception message f-string
+    "PTH",     # Pathlib preference (existing code uses os/open)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S101"]  # Allow assert in tests
+
+[tool.ruff.lint.isort]
+known-first-party = ["refactor_cli"]
+
+[tool.ruff.format]
+quote-style = "double"
+line-ending = "lf"

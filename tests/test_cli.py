@@ -4,16 +4,39 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
 from typer.testing import CliRunner
 
 # Add the src directory to the path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from refactor_cli import app, __version__, AGENT_CONFIG
-
+from refactor_cli import AGENT_CONFIG, __version__, app
 
 runner = CliRunner()
+
+
+def mock_download_and_extract(project_path, ai_assistant, _is_current_dir=False, **_kwargs):
+    """Mock function that creates the expected directory structure without downloading."""
+    # Create the .refactor directory structure
+    refactor_dir = project_path / ".refactor"
+    refactor_dir.mkdir(parents=True, exist_ok=True)
+    (refactor_dir / "memory").mkdir(exist_ok=True)
+    (refactor_dir / "templates").mkdir(exist_ok=True)
+    (refactor_dir / "refactorings").mkdir(exist_ok=True)
+
+    # Create the agent-specific directory
+    agent_folders = {
+        "claude": ".claude/commands",
+        "gemini": ".gemini/commands",
+        "copilot": ".github/agents",
+        "cursor-agent": ".cursor/commands",
+    }
+    if ai_assistant in agent_folders:
+        agent_dir = project_path / agent_folders[ai_assistant]
+        agent_dir.mkdir(parents=True, exist_ok=True)
+        # Create a dummy command file
+        (agent_dir / "refactor.start.md").write_text("# Start refactoring")
+
+    return project_path
 
 
 class TestVersion:
@@ -33,7 +56,7 @@ class TestCheck:
         """Test that check command runs without error."""
         result = runner.invoke(app, ["check"])
         assert result.exit_code == 0
-        assert "System Check" in result.stdout
+        assert "Check Available Tools" in result.stdout
 
 
 class TestInit:
@@ -47,26 +70,35 @@ class TestInit:
 
     def test_init_with_here_flag(self, tmp_path):
         """Test init with --here flag in empty directory."""
-        with patch("pathlib.Path.cwd", return_value=tmp_path):
-            result = runner.invoke(app, ["init", "--here", "--no-git"])
+        with (
+            patch("pathlib.Path.cwd", return_value=tmp_path),
+            patch("refactor_cli.download_and_extract_template", side_effect=mock_download_and_extract),
+        ):
+            result = runner.invoke(app, ["init", "--here", "--ai", "claude", "--no-git", "--ignore-agent-tools"])
             assert result.exit_code == 0
-            assert "Project initialized successfully" in result.stdout
+            assert "Refactor Kit Project Setup" in result.stdout
             assert (tmp_path / ".refactor").exists()
             assert (tmp_path / ".refactor" / "memory").exists()
 
     def test_init_with_project_name(self, tmp_path):
         """Test init with project name."""
         project_name = "my-test-project"
-        with patch("pathlib.Path.cwd", return_value=tmp_path):
-            result = runner.invoke(app, ["init", project_name, "--no-git"])
+        with (
+            patch("pathlib.Path.cwd", return_value=tmp_path),
+            patch("refactor_cli.download_and_extract_template", side_effect=mock_download_and_extract),
+        ):
+            result = runner.invoke(app, ["init", project_name, "--ai", "claude", "--no-git", "--ignore-agent-tools"])
             assert result.exit_code == 0
-            assert "Project initialized successfully" in result.stdout
+            assert "Refactor Kit Project Setup" in result.stdout
             assert (tmp_path / project_name / ".refactor").exists()
 
     def test_init_with_dot_as_project_name(self, tmp_path):
         """Test init with '.' as project name."""
-        with patch("pathlib.Path.cwd", return_value=tmp_path):
-            result = runner.invoke(app, ["init", ".", "--no-git"])
+        with (
+            patch("pathlib.Path.cwd", return_value=tmp_path),
+            patch("refactor_cli.download_and_extract_template", side_effect=mock_download_and_extract),
+        ):
+            result = runner.invoke(app, ["init", ".", "--ai", "claude", "--no-git", "--ignore-agent-tools"])
             assert result.exit_code == 0
             assert (tmp_path / ".refactor").exists()
 
@@ -75,30 +107,37 @@ class TestInit:
         with patch("pathlib.Path.cwd", return_value=tmp_path):
             result = runner.invoke(app, ["init", "--here", "--ai", "unknown-agent", "--no-git"])
             assert result.exit_code == 1
-            assert "Unknown AI assistant" in result.stdout
+            assert "Invalid AI assistant" in result.stdout
 
     def test_init_with_claude_assistant(self, tmp_path):
         """Test init with Claude AI assistant."""
-        with patch("pathlib.Path.cwd", return_value=tmp_path):
-            result = runner.invoke(
-                app, ["init", "--here", "--ai", "claude", "--no-git", "--ignore-agent-tools"]
-            )
+        with (
+            patch("pathlib.Path.cwd", return_value=tmp_path),
+            patch("refactor_cli.download_and_extract_template", side_effect=mock_download_and_extract),
+        ):
+            result = runner.invoke(app, ["init", "--here", "--ai", "claude", "--no-git", "--ignore-agent-tools"])
             assert result.exit_code == 0
             assert (tmp_path / ".claude" / "commands").exists()
 
     def test_init_with_copilot_assistant(self, tmp_path):
         """Test init with GitHub Copilot AI assistant."""
-        with patch("pathlib.Path.cwd", return_value=tmp_path):
-            result = runner.invoke(
-                app, ["init", "--here", "--ai", "copilot", "--no-git", "--ignore-agent-tools"]
-            )
+        with (
+            patch("pathlib.Path.cwd", return_value=tmp_path),
+            patch("refactor_cli.download_and_extract_template", side_effect=mock_download_and_extract),
+        ):
+            result = runner.invoke(app, ["init", "--here", "--ai", "copilot", "--no-git", "--ignore-agent-tools"])
             assert result.exit_code == 0
             assert (tmp_path / ".github" / "agents").exists()
 
     def test_init_with_debug_flag(self, tmp_path):
         """Test init with --debug flag shows debug output."""
-        with patch("pathlib.Path.cwd", return_value=tmp_path):
-            result = runner.invoke(app, ["init", "--here", "--no-git", "--debug"])
+        with (
+            patch("pathlib.Path.cwd", return_value=tmp_path),
+            patch("refactor_cli.download_and_extract_template", side_effect=mock_download_and_extract),
+        ):
+            result = runner.invoke(
+                app, ["init", "--here", "--ai", "claude", "--no-git", "--ignore-agent-tools", "--debug"]
+            )
             assert result.exit_code == 0
             assert "[DEBUG]" in result.stdout
             assert "Python version" in result.stdout
@@ -125,6 +164,4 @@ class TestAgentConfig:
         """Test that CLI-based agents have install URLs."""
         for agent_key, config in AGENT_CONFIG.items():
             if config["requires_cli"]:
-                assert config["install_url"] is not None, (
-                    f"CLI agent '{agent_key}' should have install_url"
-                )
+                assert config["install_url"] is not None, f"CLI agent '{agent_key}' should have install_url"

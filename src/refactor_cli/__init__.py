@@ -8,10 +8,9 @@ import subprocess
 import sys
 import tempfile
 import zipfile
-from datetime import datetime, timezone
-from importlib.metadata import version, PackageNotFoundError
+from datetime import UTC, datetime
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
-from typing import Optional, Tuple
 
 import httpx
 import readchar
@@ -70,7 +69,7 @@ def _parse_rate_limit_headers(headers: httpx.Headers) -> dict:
     if "X-RateLimit-Reset" in headers:
         reset_epoch = int(headers.get("X-RateLimit-Reset", "0"))
         if reset_epoch:
-            reset_time = datetime.fromtimestamp(reset_epoch, tz=timezone.utc)
+            reset_time = datetime.fromtimestamp(reset_epoch, tz=UTC)
             info["reset_epoch"] = reset_epoch
             info["reset_time"] = reset_time
             info["reset_local"] = reset_time.astimezone()
@@ -112,6 +111,7 @@ def _format_rate_limit_error(status_code: int, headers: httpx.Headers, url: str)
     lines.append("  • Authenticated requests have a limit of 5,000/hour vs 60/hour for unauthenticated.")
 
     return "\n".join(lines)
+
 
 # ASCII Art Banner
 BANNER = """
@@ -237,11 +237,10 @@ class StepTracker:
                     line = f"{symbol} [bright_black]{label} ({detail_text})[/bright_black]"
                 else:
                     line = f"{symbol} [bright_black]{label}[/bright_black]"
+            elif detail_text:
+                line = f"{symbol} [white]{label}[/white] [bright_black]({detail_text})[/bright_black]"
             else:
-                if detail_text:
-                    line = f"{symbol} [white]{label}[/white] [bright_black]({detail_text})[/bright_black]"
-                else:
-                    line = f"{symbol} [white]{label}[/white]"
+                line = f"{symbol} [white]{label}[/white]"
 
             tree.add(line)
         return tree
@@ -251,9 +250,9 @@ def get_key():
     """Get a single keypress in a cross-platform way using readchar."""
     key = readchar.readkey()
 
-    if key == readchar.key.UP or key == readchar.key.CTRL_P:
+    if key in (readchar.key.UP, readchar.key.CTRL_P):
         return "up"
-    if key == readchar.key.DOWN or key == readchar.key.CTRL_N:
+    if key in (readchar.key.DOWN, readchar.key.CTRL_N):
         return "down"
     if key == readchar.key.ENTER:
         return "enter"
@@ -265,13 +264,10 @@ def get_key():
     return key
 
 
-def select_with_arrows(options: dict, prompt_text: str = "Select an option", default_key: str = None) -> str:
+def select_with_arrows(options: dict, prompt_text: str = "Select an option", default_key: str | None = None) -> str:
     """Interactive selection using arrow keys with Rich Live display."""
     option_keys = list(options.keys())
-    if default_key and default_key in option_keys:
-        selected_index = option_keys.index(default_key)
-    else:
-        selected_index = 0
+    selected_index = option_keys.index(default_key) if default_key and default_key in option_keys else 0
 
     selected_key = None
 
@@ -363,7 +359,7 @@ def callback(ctx: typer.Context):
         console.print()
 
 
-def check_tool(tool: str, install_url: str = None, tracker: StepTracker = None) -> bool:
+def check_tool(tool: str, install_url: str | None = None, tracker: StepTracker | None = None) -> bool:
     """Check if a tool is installed and available in PATH."""
     result = shutil.which(tool)
     if result:
@@ -372,17 +368,16 @@ def check_tool(tool: str, install_url: str = None, tracker: StepTracker = None) 
         else:
             console.print(f"  [green]✓[/green] {tool} found at {result}")
         return True
+    if tracker:
+        tracker.error(tool, "not found")
     else:
-        if tracker:
-            tracker.error(tool, "not found")
-        else:
-            console.print(f"  [red]✗[/red] {tool} not found")
-            if install_url:
-                console.print(f"    Install from: {install_url}")
-        return False
+        console.print(f"  [red]✗[/red] {tool} not found")
+        if install_url:
+            console.print(f"    Install from: {install_url}")
+    return False
 
 
-def is_git_repo(path: Path = None) -> bool:
+def is_git_repo(path: Path | None = None) -> bool:
     """Check if the specified path is inside a git repository."""
     if path is None:
         path = Path.cwd()
@@ -401,7 +396,7 @@ def is_git_repo(path: Path = None) -> bool:
         return False
 
 
-def init_git_repo(project_path: Path, quiet: bool = False) -> Tuple[bool, Optional[str]]:
+def init_git_repo(project_path: Path, quiet: bool = False) -> tuple[bool, str | None]:
     """Initialize a git repository in the specified path."""
     original_cwd = Path.cwd()
     try:
@@ -423,21 +418,24 @@ def init_git_repo(project_path: Path, quiet: bool = False) -> Tuple[bool, Option
         os.chdir(original_cwd)
 
 
-def handle_vscode_settings(sub_item: Path, dest_file: Path, rel_path: Path, verbose: bool = False, tracker: StepTracker = None) -> None:
+def handle_vscode_settings(
+    sub_item: Path, dest_file: Path, rel_path: Path, verbose: bool = False, tracker: StepTracker = None
+) -> None:
     """Handle merging or copying of .vscode/settings.json files."""
+
     def log(message: str, color: str = "green"):
         if verbose and not tracker:
             console.print(f"[{color}]{message}[/] {rel_path}")
 
     try:
-        with open(sub_item, 'r', encoding='utf-8') as f:
+        with open(sub_item, encoding="utf-8") as f:
             new_settings = json.load(f)
 
         if dest_file.exists():
             merged = merge_json_files(dest_file, new_settings, verbose=verbose and not tracker)
-            with open(dest_file, 'w', encoding='utf-8') as f:
+            with open(dest_file, "w", encoding="utf-8") as f:
                 json.dump(merged, f, indent=4)
-                f.write('\n')
+                f.write("\n")
             log("Merged:", "green")
         else:
             shutil.copy2(sub_item, dest_file)
@@ -457,7 +455,7 @@ def merge_json_files(existing_path: Path, new_content: dict, verbose: bool = Fal
     - Nested dictionaries are merged recursively
     """
     try:
-        with open(existing_path, 'r', encoding='utf-8') as f:
+        with open(existing_path, encoding="utf-8") as f:
             existing_content = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         return new_content
@@ -479,18 +477,13 @@ def merge_json_files(existing_path: Path, new_content: dict, verbose: bool = Fal
     return merged
 
 
-def _merge_item_to_dest(
-    item: Path,
-    dest_path: Path,
-    verbose: bool,
-    tracker: "StepTracker | None"
-) -> None:
+def _merge_item_to_dest(item: Path, dest_path: Path, verbose: bool, tracker: "StepTracker | None") -> None:
     """Copy or merge a single item (file or directory) to the destination."""
     if item.is_dir():
         if dest_path.exists():
             if verbose and not tracker:
                 console.print(f"[yellow]Merging directory:[/yellow] {item.name}")
-            for sub_item in item.rglob('*'):
+            for sub_item in item.rglob("*"):
                 if not sub_item.is_file():
                     continue
                 rel_path = sub_item.relative_to(item)
@@ -509,10 +502,7 @@ def _merge_item_to_dest(
 
 
 def _get_source_dir_from_extracted(
-    extracted_items: list[Path],
-    base_path: Path,
-    verbose: bool,
-    tracker: "StepTracker | None"
+    extracted_items: list[Path], base_path: Path, verbose: bool, tracker: "StepTracker | None"
 ) -> Path:
     """If extracted items contain a single nested directory, return it; otherwise return base_path."""
     if len(extracted_items) == 1 and extracted_items[0].is_dir():
@@ -526,10 +516,7 @@ def _get_source_dir_from_extracted(
 
 
 def _extract_and_merge_to_current_dir(
-    zip_ref: zipfile.ZipFile,
-    project_path: Path,
-    verbose: bool,
-    tracker: "StepTracker | None"
+    zip_ref: zipfile.ZipFile, project_path: Path, verbose: bool, tracker: "StepTracker | None"
 ) -> None:
     """Extract ZIP to temp directory and merge contents into current directory."""
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -554,10 +541,7 @@ def _extract_and_merge_to_current_dir(
 
 
 def _extract_to_new_directory(
-    zip_ref: zipfile.ZipFile,
-    project_path: Path,
-    verbose: bool,
-    tracker: "StepTracker | None"
+    zip_ref: zipfile.ZipFile, project_path: Path, verbose: bool, tracker: "StepTracker | None"
 ) -> None:
     """Extract ZIP directly to project path and flatten if needed."""
     zip_ref.extractall(project_path)
@@ -595,8 +579,8 @@ def download_template_from_github(
     show_progress: bool = True,
     http_client: httpx.Client = None,
     debug: bool = False,
-    github_token: str = None
-) -> Tuple[Path, dict]:
+    github_token: str | None = None,
+) -> tuple[Path, dict]:
     """Download the template ZIP from GitHub Releases."""
     repo_owner = "sasaron"
     repo_name = "refactor-kit"
@@ -631,16 +615,15 @@ def download_template_from_github(
 
     assets = release_data.get("assets", [])
     pattern = f"refactor-kit-template-{ai_assistant}"
-    matching_assets = [
-        asset for asset in assets
-        if pattern in asset["name"] and asset["name"].endswith(".zip")
-    ]
+    matching_assets = [asset for asset in assets if pattern in asset["name"] and asset["name"].endswith(".zip")]
 
     asset = matching_assets[0] if matching_assets else None
 
     if asset is None:
-        console.print(f"[red]No matching release asset found[/red] for [bold]{ai_assistant}[/bold] (expected pattern: [bold]{pattern}[/bold])")
-        asset_names = [a.get('name', '?') for a in assets]
+        console.print(
+            f"[red]No matching release asset found[/red] for [bold]{ai_assistant}[/bold] (expected pattern: [bold]{pattern}[/bold])"
+        )
+        asset_names = [a.get("name", "?") for a in assets]
         console.print(Panel("\n".join(asset_names) or "(no assets)", title="Available Assets", border_style="yellow"))
         raise typer.Exit(1)
 
@@ -674,28 +657,26 @@ def download_template_from_github(
                         error_body = repr(response.content[:400])
                     error_msg += f"\n\n[dim]Response body (truncated 400):[/dim]\n{error_body}"
                 raise RuntimeError(error_msg)
-            total_size = int(response.headers.get('content-length', 0))
-            with open(zip_path, 'wb') as f:
+            total_size = int(response.headers.get("content-length", 0))
+            with open(zip_path, "wb") as f:
                 if total_size == 0:
-                    for chunk in response.iter_bytes(chunk_size=8192):
-                        f.write(chunk)
-                else:
-                    if show_progress:
-                        with Progress(
-                            SpinnerColumn(),
-                            TextColumn("[progress.description]{task.description}"),
-                            TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
-                            console=console,
-                        ) as progress:
-                            task = progress.add_task("Downloading...", total=total_size)
-                            downloaded = 0
-                            for chunk in response.iter_bytes(chunk_size=8192):
-                                f.write(chunk)
-                                downloaded += len(chunk)
-                                progress.update(task, completed=downloaded)
-                    else:
+                    f.writelines(response.iter_bytes(chunk_size=8192))
+                elif show_progress:
+                    with Progress(
+                        SpinnerColumn(),
+                        TextColumn("[progress.description]{task.description}"),
+                        TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+                        console=console,
+                    ) as progress:
+                        task = progress.add_task("Downloading...", total=total_size)
+                        downloaded = 0
                         for chunk in response.iter_bytes(chunk_size=8192):
                             f.write(chunk)
+                            downloaded += len(chunk)
+                            progress.update(task, completed=downloaded)
+                else:
+                    for chunk in response.iter_bytes(chunk_size=8192):
+                        f.write(chunk)
     except Exception as e:
         console.print("[red]Error downloading template[/red]")
         detail = str(e)
@@ -707,12 +688,7 @@ def download_template_from_github(
     if verbose:
         console.print(f"Downloaded: {filename}")
 
-    metadata = {
-        "filename": filename,
-        "size": file_size,
-        "release": release_data["tag_name"],
-        "asset_url": download_url
-    }
+    metadata = {"filename": filename, "size": file_size, "release": release_data["tag_name"], "asset_url": download_url}
     return zip_path, metadata
 
 
@@ -725,7 +701,7 @@ def download_and_extract_template(
     tracker: StepTracker | None = None,
     http_client: httpx.Client = None,
     debug: bool = False,
-    github_token: str = None
+    github_token: str | None = None,
 ) -> Path:
     """Download the latest release and extract it to create a new project."""
     current_dir = Path.cwd()
@@ -740,18 +716,17 @@ def download_and_extract_template(
             show_progress=(tracker is None),
             http_client=http_client,
             debug=debug,
-            github_token=github_token
+            github_token=github_token,
         )
         if tracker:
             tracker.complete("fetch", f"release {meta['release']} ({meta['size']:,} bytes)")
             tracker.add("download", "Download template")
-            tracker.complete("download", meta['filename'])
+            tracker.complete("download", meta["filename"])
     except Exception as e:
         if tracker:
             tracker.error("fetch", str(e))
-        else:
-            if verbose:
-                console.print(f"[red]Error downloading template:[/red] {e}")
+        elif verbose:
+            console.print(f"[red]Error downloading template:[/red] {e}")
         raise
 
     if tracker:
@@ -764,7 +739,7 @@ def download_and_extract_template(
         if not is_current_dir:
             project_path.mkdir(parents=True)
 
-        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        with zipfile.ZipFile(zip_path, "r") as zip_ref:
             zip_contents = zip_ref.namelist()
             if tracker:
                 tracker.start("zip-list")
@@ -780,11 +755,10 @@ def download_and_extract_template(
     except Exception as e:
         if tracker:
             tracker.error("extract", str(e))
-        else:
-            if verbose:
-                console.print(f"[red]Error extracting template:[/red] {e}")
-                if debug:
-                    console.print(Panel(str(e), title="Extraction Error", border_style="red"))
+        elif verbose:
+            console.print(f"[red]Error extracting template:[/red] {e}")
+            if debug:
+                console.print(Panel(str(e), title="Extraction Error", border_style="red"))
 
         if not is_current_dir and project_path.exists():
             shutil.rmtree(project_path)
@@ -898,10 +872,10 @@ def check():
 
 @app.command()
 def init(
-    project_name: Optional[str] = typer.Argument(
+    project_name: str | None = typer.Argument(
         None, help="Name for your new project directory (use '.' for current directory)"
     ),
-    ai_assistant: Optional[str] = typer.Option(
+    ai_assistant: str | None = typer.Option(
         None,
         "--ai",
         help=f"AI assistant to use: {', '.join(AGENT_CONFIG.keys())}",
@@ -913,13 +887,9 @@ def init(
         help="Force merge/overwrite when initializing in current directory",
     ),
     no_git: bool = typer.Option(False, "--no-git", help="Skip git repository initialization"),
-    ignore_agent_tools: bool = typer.Option(
-        False, "--ignore-agent-tools", help="Skip checks for AI agent tools"
-    ),
+    ignore_agent_tools: bool = typer.Option(False, "--ignore-agent-tools", help="Skip checks for AI agent tools"),
     skip_tls: bool = typer.Option(False, "--skip-tls", help="Skip SSL/TLS verification (not recommended)"),
-    debug: bool = typer.Option(
-        False, "--debug", help="Show verbose diagnostic output for troubleshooting"
-    ),
+    debug: bool = typer.Option(False, "--debug", help="Show verbose diagnostic output for troubleshooting"),
     github_token: str = typer.Option(
         None, "--github-token", help="GitHub token for API requests (or set GH_TOKEN/GITHUB_TOKEN env var)"
     ),
@@ -944,7 +914,9 @@ def init(
         raise typer.Exit(1)
 
     if not here and not project_name:
-        console.print("[red]Error:[/red] Must specify either a project name, use '.' for current directory, or use --here flag")
+        console.print(
+            "[red]Error:[/red] Must specify either a project name, use '.' for current directory, or use --here flag"
+        )
         raise typer.Exit(1)
 
     # Determine target directory
@@ -957,7 +929,9 @@ def init(
         existing_items = list(target_dir.iterdir())
         if existing_items:
             console.print(f"[yellow]Warning:[/yellow] Current directory is not empty ({len(existing_items)} items)")
-            console.print("[yellow]Template files will be merged with existing content and may overwrite existing files[/yellow]")
+            console.print(
+                "[yellow]Template files will be merged with existing content and may overwrite existing files[/yellow]"
+            )
             if force:
                 console.print("[cyan]--force supplied: skipping confirmation and proceeding with merge[/cyan]")
             else:
@@ -1062,10 +1036,7 @@ def init(
         tracker.attach_refresh(lambda: live.update(tracker.render()))
 
         try:
-            if skip_tls:
-                ssl_verify = False
-            else:
-                ssl_verify = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+            ssl_verify = False if skip_tls else truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
             with httpx.Client(verify=ssl_verify) as local_client:
                 download_and_extract_template(
                     target_dir,
@@ -1075,7 +1046,7 @@ def init(
                     tracker=tracker,
                     http_client=local_client,
                     debug=debug,
-                    github_token=github_token
+                    github_token=github_token,
                 )
 
                 ensure_executable_scripts(target_dir, tracker=tracker)
