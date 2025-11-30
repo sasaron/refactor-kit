@@ -4,14 +4,12 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
 from typer.testing import CliRunner
 
 # Add the src directory to the path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from refactor_cli import app, __version__, AGENT_CONFIG
-
+from refactor_cli import AGENT_CONFIG, __version__, app
 
 runner = CliRunner()
 
@@ -80,18 +78,14 @@ class TestInit:
     def test_init_with_claude_assistant(self, tmp_path):
         """Test init with Claude AI assistant."""
         with patch("pathlib.Path.cwd", return_value=tmp_path):
-            result = runner.invoke(
-                app, ["init", "--here", "--ai", "claude", "--no-git", "--ignore-agent-tools"]
-            )
+            result = runner.invoke(app, ["init", "--here", "--ai", "claude", "--no-git", "--ignore-agent-tools"])
             assert result.exit_code == 0
             assert (tmp_path / ".claude" / "commands").exists()
 
     def test_init_with_copilot_assistant(self, tmp_path):
         """Test init with GitHub Copilot AI assistant."""
         with patch("pathlib.Path.cwd", return_value=tmp_path):
-            result = runner.invoke(
-                app, ["init", "--here", "--ai", "copilot", "--no-git", "--ignore-agent-tools"]
-            )
+            result = runner.invoke(app, ["init", "--here", "--ai", "copilot", "--no-git", "--ignore-agent-tools"])
             assert result.exit_code == 0
             assert (tmp_path / ".github" / "agents").exists()
 
@@ -125,6 +119,4 @@ class TestAgentConfig:
         """Test that CLI-based agents have install URLs."""
         for agent_key, config in AGENT_CONFIG.items():
             if config["requires_cli"]:
-                assert config["install_url"] is not None, (
-                    f"CLI agent '{agent_key}' should have install_url"
-                )
+                assert config["install_url"] is not None, f"CLI agent '{agent_key}' should have install_url"
