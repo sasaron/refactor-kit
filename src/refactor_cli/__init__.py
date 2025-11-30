@@ -254,7 +254,7 @@ def select_with_arrows(options: dict, prompt_text: str = "Select an option", def
 def show_banner():
     """Display the ASCII art banner."""
     banner_lines = BANNER.strip().split("\n")
-    colors = ["bright_cyan", "cyan", "bright_blue", "blue", "bright_magenta", "magenta"]
+    colors = ["bright_yellow", "yellow", "bright_red", "red", "bright_magenta", "magenta"]
 
     styled_banner = Text()
     for i, line in enumerate(banner_lines):
