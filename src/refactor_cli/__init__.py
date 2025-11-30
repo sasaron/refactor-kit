@@ -299,36 +299,34 @@ def is_git_repo(path: Path = None) -> bool:
         return False
 
     try:
-        subprocess.run(
+        result = subprocess.run(
             ["git", "rev-parse", "--is-inside-work-tree"],
-            check=True,
             capture_output=True,
             cwd=path,
         )
-        return True
-    except (subprocess.CalledProcessError, FileNotFoundError):
+        return result.returncode == 0
+    except FileNotFoundError:
         return False
 
 
 def init_git_repo(project_path: Path, quiet: bool = False) -> Tuple[bool, Optional[str]]:
     """Initialize a git repository in the specified path."""
+    original_cwd = Path.cwd()
     try:
-        original_cwd = Path.cwd()
         os.chdir(project_path)
         if not quiet:
             console.print("[cyan]Initializing git repository...[/cyan]")
-        subprocess.run(["git", "init"], check=True, capture_output=True, text=True)
+        result = subprocess.run(["git", "init"], capture_output=True, text=True)
+        if result.returncode != 0:
+            error_msg = f"Command: git init\nExit code: {result.returncode}"
+            if result.stderr:
+                error_msg += f"\nError: {result.stderr.strip()}"
+            if not quiet:
+                console.print("[red]Error initializing git repository[/red]")
+            return False, error_msg
         if not quiet:
             console.print("[green]✓[/green] Git repository initialized")
         return True, None
-
-    except subprocess.CalledProcessError as e:
-        error_msg = f"Command: {' '.join(e.cmd)}\nExit code: {e.returncode}"
-        if e.stderr:
-            error_msg += f"\nError: {e.stderr.strip()}"
-        if not quiet:
-            console.print(f"[red]Error initializing git repository:[/red] {e}")
-        return False, error_msg
     finally:
         os.chdir(original_cwd)
 
