@@ -5,6 +5,7 @@ on:
     branches: [ main ]
     paths:
       - 'templates/**'
+      - 'src/**'
       - '.github/workflows/**'
   workflow_dispatch:
 
