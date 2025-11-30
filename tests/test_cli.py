@@ -414,9 +414,9 @@ class TestGitUtils:
 
     def test_init_git_repo_success(self, tmp_path):
         """Test successful git repository initialization."""
-        success, error = init_git_repo(tmp_path, quiet=True)
+        success, _error = init_git_repo(tmp_path, quiet=True)
         assert success is True
-        assert error is None
+        assert _error is None
         assert (tmp_path / ".git").exists()
 
     def test_init_git_repo_already_initialized(self, tmp_path):
@@ -425,7 +425,7 @@ class TestGitUtils:
 
         subprocess.run(["git", "init"], cwd=tmp_path, capture_output=True)
         # Running init again should still succeed
-        success, error = init_git_repo(tmp_path, quiet=True)
+        success, _error = init_git_repo(tmp_path, quiet=True)
         assert success is True
 
 
@@ -877,7 +877,7 @@ class TestEnsureExecutableScripts:
 class TestDebugPrint:
     """Tests for debug_print function."""
 
-    def test_debug_print_enabled(self, capsys):
+    def test_debug_print_enabled(self):
         """Test debug print when enabled."""
         import refactor_cli
 
@@ -889,7 +889,7 @@ class TestDebugPrint:
         finally:
             refactor_cli._debug_mode = original
 
-    def test_debug_print_disabled(self, capsys):
+    def test_debug_print_disabled(self):
         """Test debug print when disabled."""
         import refactor_cli
 
@@ -905,7 +905,7 @@ class TestDebugPrint:
 class TestShowBanner:
     """Tests for show_banner function."""
 
-    def test_show_banner_runs(self, capsys):
+    def test_show_banner_runs(self):
         """Test that show_banner executes without error."""
         # Just verify it doesn't raise
         show_banner()
@@ -989,7 +989,7 @@ class TestInitGitRepoEdgeCases:
 
     def test_init_git_repo_verbose(self, tmp_path):
         """Test init_git_repo with verbose output."""
-        success, error = init_git_repo(tmp_path, quiet=False)
+        success, _error = init_git_repo(tmp_path, quiet=False)
         assert success is True
         assert (tmp_path / ".git").exists()
 
@@ -1225,9 +1225,11 @@ class TestGetKey:
         """Test get_key raises KeyboardInterrupt for Ctrl+C."""
         import readchar
 
-        with patch.object(readchar, "readkey", return_value=readchar.key.CTRL_C):
-            with pytest.raises(KeyboardInterrupt):
-                get_key()
+        with (
+            patch.object(readchar, "readkey", return_value=readchar.key.CTRL_C),
+            pytest.raises(KeyboardInterrupt),
+        ):
+            get_key()
 
     def test_get_key_other_returns_key(self):
         """Test get_key returns the key for other keys."""
@@ -1292,9 +1294,11 @@ class TestSelectWithArrows:
 
         options = {"opt1": "Option 1", "opt2": "Option 2"}
 
-        with patch("refactor_cli.get_key", side_effect=["escape"]):
-            with pytest.raises(typer.Exit):
-                select_with_arrows(options, "Select")
+        with (
+            patch("refactor_cli.get_key", side_effect=["escape"]),
+            pytest.raises(typer.Exit),
+        ):
+            select_with_arrows(options, "Select")
 
     def test_select_keyboard_interrupt_exits(self):
         """Test keyboard interrupt cancels selection."""
@@ -1302,9 +1306,11 @@ class TestSelectWithArrows:
 
         options = {"opt1": "Option 1", "opt2": "Option 2"}
 
-        with patch("refactor_cli.get_key", side_effect=KeyboardInterrupt):
-            with pytest.raises(typer.Exit):
-                select_with_arrows(options, "Select")
+        with (
+            patch("refactor_cli.get_key", side_effect=KeyboardInterrupt),
+            pytest.raises(typer.Exit),
+        ):
+            select_with_arrows(options, "Select")
 
 
 class TestInitCommandPaths:
@@ -1318,8 +1324,10 @@ class TestInitCommandPaths:
 
     def test_init_no_git_flag(self, tmp_path):
         """Test init with --no-git flag."""
-        with patch("refactor_cli.Path.cwd", return_value=tmp_path):
-            with patch("refactor_cli.download_and_extract_template", side_effect=mock_download_and_extract):
-                result = runner.invoke(app, ["init", "--ai", "claude", "--no-git", "test-project"])
-                # Should complete without git init
-                assert "git init" not in result.output.lower() or result.exit_code == 0
+        with (
+            patch("refactor_cli.Path.cwd", return_value=tmp_path),
+            patch("refactor_cli.download_and_extract_template", side_effect=mock_download_and_extract),
+        ):
+            result = runner.invoke(app, ["init", "--ai", "claude", "--no-git", "test-project"])
+            # Should complete without git init
+            assert "git init" not in result.output.lower() or result.exit_code == 0
