@@ -1333,25 +1333,17 @@ class TestDownloadTemplateFromGitHub:
             ],
         }
 
-        mock_client = patch.object(
-            _get_http_client(skip_tls=True).__class__,
-            "get",
-            return_value=type(
-                "Response",
-                (),
-                {"status_code": 200, "json": lambda: mock_release_response, "headers": {}},
-            )(),
-        )
-
         # Create a proper mock HTTP client
         class MockResponse:
             status_code = 200
-            headers = {"content-length": str(len(zip_content))}
+
+            def __init__(self):
+                self.headers = {"content-length": str(len(zip_content))}
 
             def json(self):
                 return mock_release_response
 
-            def iter_bytes(self, chunk_size=8192):
+            def iter_bytes(self, chunk_size=8192):  # noqa: ARG002
                 yield zip_content
 
             def __enter__(self):
@@ -1361,10 +1353,10 @@ class TestDownloadTemplateFromGitHub:
                 pass
 
         class MockClient:
-            def get(self, url, **kwargs):
+            def get(self, _url, **_kwargs):
                 return MockResponse()
 
-            def stream(self, method, url, **kwargs):
+            def stream(self, _method, _url, **_kwargs):
                 return MockResponse()
 
             def __enter__(self):
@@ -1402,13 +1394,15 @@ class TestDownloadTemplateFromGitHub:
 
         class MockResponse:
             status_code = 200
-            headers = {}
+
+            def __init__(self):
+                self.headers = {}
 
             def json(self):
                 return mock_release_response
 
         class MockClient:
-            def get(self, url, **kwargs):
+            def get(self, _url, **_kwargs):
                 return MockResponse()
 
             def __enter__(self):
@@ -1437,13 +1431,15 @@ class TestDownloadTemplateFromGitHub:
 
         class MockResponse:
             status_code = 200
-            headers = {}
+
+            def __init__(self):
+                self.headers = {}
 
             def json(self):
                 return mock_release_response
 
         class MockClient:
-            def get(self, url, **kwargs):
+            def get(self, _url, **_kwargs):
                 return MockResponse()
 
             def __enter__(self):
@@ -1467,11 +1463,13 @@ class TestDownloadTemplateFromGitHub:
 
         class MockResponse:
             status_code = 403
-            headers = {"X-RateLimit-Remaining": "0"}
             text = "Rate limit exceeded"
 
+            def __init__(self):
+                self.headers = {"X-RateLimit-Remaining": "0"}
+
         class MockClient:
-            def get(self, url, **kwargs):
+            def get(self, _url, **_kwargs):
                 return MockResponse()
 
             def __enter__(self):
@@ -1514,12 +1512,14 @@ class TestDownloadTemplateFromGitHub:
 
         class MockResponse:
             status_code = 200
-            headers = {"content-length": str(len(zip_content))}
+
+            def __init__(self):
+                self.headers = {"content-length": str(len(zip_content))}
 
             def json(self):
                 return mock_release_response
 
-            def iter_bytes(self, chunk_size=8192):
+            def iter_bytes(self, chunk_size=8192):  # noqa: ARG002
                 yield zip_content
 
             def __enter__(self):
@@ -1529,11 +1529,11 @@ class TestDownloadTemplateFromGitHub:
                 pass
 
         class MockClient:
-            def get(self, url, **kwargs):
+            def get(self, _url, **kwargs):
                 captured_headers.append(kwargs.get("headers", {}))
                 return MockResponse()
 
-            def stream(self, method, url, **kwargs):
+            def stream(self, _method, _url, **kwargs):
                 captured_headers.append(kwargs.get("headers", {}))
                 return MockResponse()
 
@@ -1586,12 +1586,14 @@ class TestDownloadAndExtractTemplate:
 
         class MockResponse:
             status_code = 200
-            headers = {"content-length": str(len(zip_content))}
+
+            def __init__(self):
+                self.headers = {"content-length": str(len(zip_content))}
 
             def json(self):
                 return mock_release_response
 
-            def iter_bytes(self, chunk_size=8192):
+            def iter_bytes(self, chunk_size=8192):  # noqa: ARG002
                 yield zip_content
 
             def __enter__(self):
@@ -1601,10 +1603,10 @@ class TestDownloadAndExtractTemplate:
                 pass
 
         class MockClient:
-            def get(self, url, **kwargs):
+            def get(self, _url, **_kwargs):
                 return MockResponse()
 
-            def stream(self, method, url, **kwargs):
+            def stream(self, _method, _url, **_kwargs):
                 return MockResponse()
 
             def __enter__(self):
@@ -1658,12 +1660,14 @@ class TestDownloadAndExtractTemplate:
 
         class MockResponse:
             status_code = 200
-            headers = {"content-length": str(len(zip_content))}
+
+            def __init__(self):
+                self.headers = {"content-length": str(len(zip_content))}
 
             def json(self):
                 return mock_release_response
 
-            def iter_bytes(self, chunk_size=8192):
+            def iter_bytes(self, chunk_size=8192):  # noqa: ARG002
                 yield zip_content
 
             def __enter__(self):
@@ -1673,10 +1677,10 @@ class TestDownloadAndExtractTemplate:
                 pass
 
         class MockClient:
-            def get(self, url, **kwargs):
+            def get(self, _url, **_kwargs):
                 return MockResponse()
 
-            def stream(self, method, url, **kwargs):
+            def stream(self, _method, _url, **_kwargs):
                 return MockResponse()
 
             def __enter__(self):
@@ -1725,12 +1729,14 @@ class TestDownloadAndExtractTemplate:
 
         class MockResponse:
             status_code = 200
-            headers = {"content-length": str(len(zip_content))}
+
+            def __init__(self):
+                self.headers = {"content-length": str(len(zip_content))}
 
             def json(self):
                 return mock_release_response
 
-            def iter_bytes(self, chunk_size=8192):
+            def iter_bytes(self, chunk_size=8192):  # noqa: ARG002
                 yield zip_content
 
             def __enter__(self):
@@ -1740,10 +1746,10 @@ class TestDownloadAndExtractTemplate:
                 pass
 
         class MockClient:
-            def get(self, url, **kwargs):
+            def get(self, _url, **_kwargs):
                 return MockResponse()
 
-            def stream(self, method, url, **kwargs):
+            def stream(self, _method, _url, **_kwargs):
                 return MockResponse()
 
             def __enter__(self):
@@ -1783,11 +1789,13 @@ class TestDownloadAndExtractTemplate:
 
         class MockResponse:
             status_code = 500
-            headers = {}
             text = "Internal Server Error"
 
+            def __init__(self):
+                self.headers = {}
+
         class MockClient:
-            def get(self, url, **kwargs):
+            def get(self, _url, **_kwargs):
                 return MockResponse()
 
             def __enter__(self):
